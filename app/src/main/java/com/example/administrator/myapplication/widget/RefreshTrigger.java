@@ -1,0 +1,18 @@
+package com.example.administrator.myapplication.widget;
+
+/**
+ * Created by cai.jia on 2017/2/10 0010
+ */
+
+public interface RefreshTrigger {
+
+    void onStart(float headerViewHeight);
+
+    void onMove(float scrollTop, float headerViewHeight);
+
+    void onRefreshing();
+
+    void onRefreshComplete();
+
+    void onReset();
+}

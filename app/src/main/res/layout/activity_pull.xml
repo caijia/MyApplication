@@ -1,0 +1,52 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:orientation="vertical" android:layout_width="match_parent"
+    android:layout_height="match_parent">
+
+    <com.example.administrator.myapplication.widget.TestLayout
+        android:id="@+id/test_layout"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent">
+
+        <com.example.administrator.myapplication.widget.ClassicRefreshHeaderView
+            android:layout_width="match_parent"
+            android:background="#ddd"
+            android:layout_height="70dp"/>
+
+        <android.support.v7.widget.RecyclerView
+        android:id="@+id/recycler_view"
+        android:background="#999999"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"/>
+
+        <!--<include layout="@layout/test_pull_listview" />-->
+
+    </com.example.administrator.myapplication.widget.TestLayout>
+
+    <!--<com.example.administrator.myapplication.widget.SwipeRefreshLayout1-->
+        <!--android:id="@+id/test_layout"-->
+        <!--android:layout_width="match_parent"-->
+        <!--android:layout_height="match_parent"-->
+        <!--&gt;-->
+
+        <!--<android.support.v7.widget.RecyclerView-->
+            <!--android:id="@+id/recycler_view"-->
+            <!--android:background="#ff00ff"-->
+            <!--android:layout_width="match_parent"-->
+            <!--android:layout_height="match_parent"/>-->
+
+        <!--&lt;!&ndash;<include layout="@layout/test_pull_listview" />&ndash;&gt;-->
+
+    <!--</com.example.administrator.myapplication.widget.SwipeRefreshLayout1>-->
+
+    <!--<com.example.administrator.myapplication.widget.SwipeLayout-->
+        <!--android:id="@+id/test_layout"-->
+        <!--android:layout_width="match_parent"-->
+        <!--android:layout_height="match_parent">-->
+
+        <!--&lt;!&ndash;<include layout="@layout/test_pull_scrollview" />&ndash;&gt;-->
+        <!--<include layout="@layout/test_pull_listview" />-->
+
+    <!--</com.example.administrator.myapplication.widget.SwipeLayout>-->
+
+    </LinearLayout>

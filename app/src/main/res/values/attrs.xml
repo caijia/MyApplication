@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+
+    <declare-styleable name="SlidingMenuLayout">
+        <attr name="menu_width_percent" format="float"/>
+        <attr name="menu_parallax" format="float"/>
+    </declare-styleable>
+
+    <declare-styleable name="ProgressView">
+        <attr name="pv_color" format="color"/>
+        <attr name="pv_max" format="integer"/>
+        <attr name="pv_progress" format="integer"/>
+        <attr name="pv_direction">
+            <enum name="left" value="1" />
+            <enum name="right" value="2" />
+        </attr>
+    </declare-styleable>
+</resources>
