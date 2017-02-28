@@ -57,26 +57,30 @@ public class ClassicRefreshHeaderView extends RelativeLayout implements RefreshT
     }
 
     @Override
-    public void onMove(float moved, float headerViewHeight) {
-            ivArrow.setVisibility(VISIBLE);
-            progressBar.setVisibility(GONE);
-            ivSuccess.setVisibility(GONE);
-            if (moved <= headerViewHeight) {
-                if (rotated) {
-                    ivArrow.clearAnimation();
-                    ivArrow.startAnimation(rotateDown);
-                    rotated = false;
-                }
+    public void onMove(float moved, float headerViewHeight, boolean isRefreshing) {
+        if (isRefreshing) {
+            return;
+        }
 
-                tvRefresh.setText(getString(R.string.pull_to_refresh));
-            } else {
-                tvRefresh.setText(getString(R.string.release_to_refresh));
-                if (!rotated) {
-                    ivArrow.clearAnimation();
-                    ivArrow.startAnimation(rotateUp);
-                    rotated = true;
-                }
+        ivArrow.setVisibility(VISIBLE);
+        progressBar.setVisibility(GONE);
+        ivSuccess.setVisibility(GONE);
+        if (moved <= headerViewHeight) {
+            if (rotated) {
+                ivArrow.clearAnimation();
+                ivArrow.startAnimation(rotateDown);
+                rotated = false;
             }
+
+            tvRefresh.setText(getString(R.string.pull_to_refresh));
+        } else {
+            tvRefresh.setText(getString(R.string.release_to_refresh));
+            if (!rotated) {
+                ivArrow.clearAnimation();
+                ivArrow.startAnimation(rotateUp);
+                rotated = true;
+            }
+        }
     }
 
     @Override

@@ -16,7 +16,6 @@ import android.view.MotionEvent;
 import android.view.VelocityTracker;
 import android.view.View;
 import android.view.ViewConfiguration;
-import android.view.ViewGroup;
 import android.widget.AbsListView;
 import android.widget.FrameLayout;
 
@@ -59,6 +58,8 @@ public class TestLayout extends FrameLayout implements NestedScrollingParent, Ne
     private ScrollerCompat mScroller;
 
     private VelocityTracker velocityTracker;
+    private float minVelocity;
+    private float maxVelocity;
     private int oldCurrY;
 
     public TestLayout(Context context) {
@@ -73,6 +74,8 @@ public class TestLayout extends FrameLayout implements NestedScrollingParent, Ne
         super(context, attrs, defStyleAttr);
         ViewConfiguration configuration = ViewConfiguration.get(context);
         touchSlop = configuration.getScaledTouchSlop();
+        minVelocity = configuration.getScaledMinimumFlingVelocity();
+        maxVelocity = configuration.getScaledMaximumFlingVelocity();
 
         nestedScrollingChildHelper = new NestedScrollingChildHelper(this);
         nestedScrollingParentHelper = new NestedScrollingParentHelper(this);
@@ -85,7 +88,6 @@ public class TestLayout extends FrameLayout implements NestedScrollingParent, Ne
     }
 
     private void onActionDown() {
-        if (isRefreshingOrAnimRunning()) return;
         if (refreshTrigger != null) {
             refreshTrigger.onStart(headerView.getMeasuredHeight());
         }
@@ -112,29 +114,28 @@ public class TestLayout extends FrameLayout implements NestedScrollingParent, Ne
     }
 
     private void onActionMove(float deltaY) {
-        if (isRefreshingOrAnimRunning()) return;
-        overScrollTop += deltaY * DRAG_RATE;
-        overScrollTop = clampValue(0, dragRange, overScrollTop);
-        moveHeaderAndTarget(overScrollTop);
+        onActionMove(deltaY, true);
     }
 
-    private void moveHeaderAndTarget(float overScrollTop) {
+    private void onActionMove(float deltaY, boolean dragRate) {
+//        if (isRefreshingOrAnimRunning()) return;
+        overScrollTop += deltaY * (dragRate ? DRAG_RATE : 1);
+        overScrollTop = clampValue(0, dragRange, overScrollTop);
         headerView.setTranslationY(overScrollTop);
         contentView.setTranslationY(overScrollTop);
         if (refreshTrigger != null) {
-            refreshTrigger.onMove(overScrollTop, headerView.getMeasuredHeight());
+            refreshTrigger.onMove(overScrollTop, headerView.getMeasuredHeight(),
+                    currentState == REFRESHING);
         }
     }
 
     private void onActionUpOrCancel() {
-        if (isRefreshingOrAnimRunning()) return;
         computeState();
         stateMapAnimation();
     }
 
-    private boolean isRefreshingOrAnimRunning() {
-        if (animator != null && (animator.isStarted() || animator.isRunning()) ||
-                currentState == REFRESHING) {
+    private boolean isAnimRunning() {
+        if (animator != null && (animator.isStarted() || animator.isRunning())) {
             return true;
         }
         return false;
@@ -275,7 +276,7 @@ public class TestLayout extends FrameLayout implements NestedScrollingParent, Ne
     @Override
     public boolean onInterceptTouchEvent(MotionEvent ev) {
 
-        if (!isEnabled() || canChildScrollUp()) {
+        if (!isEnabled() || canChildScrollUp() || isAnimRunning()) {
             return false;
         }
 
@@ -332,7 +333,7 @@ public class TestLayout extends FrameLayout implements NestedScrollingParent, Ne
 
     @Override
     public boolean onTouchEvent(MotionEvent ev) {
-        if (!isEnabled() || canChildScrollUp()) {
+        if (!isEnabled() || canChildScrollUp() || isAnimRunning()) {
             return false;
         }
 
@@ -385,13 +386,22 @@ public class TestLayout extends FrameLayout implements NestedScrollingParent, Ne
 
             case MotionEvent.ACTION_CANCEL:
             case MotionEvent.ACTION_UP: {
+                int index = ev.findPointerIndex(activePointerId);
+                if (index < 0) {
+                    return false;
+                }
                 computeVelocity();
-                float velocityY = velocityTracker.getYVelocity();
-                boolean canFling = canFling(velocityY);
-                System.out.println("velocityY="+velocityY+"--canFling="+canFling);
-                if (canFling) {
+                int velocityY = (int) velocityTracker.getYVelocity(activePointerId);
+                boolean canFlingUp = canFlingUp(velocityY);
+                System.out.println("velocityY=" + velocityY + "--canFling=" + canFlingUp);
+                if (canFlingUp) {
+                    //回到初始位置
+                    flingToDefault(-velocityY);
 
                 } else {
+                    if (currentState == REFRESHING) {
+                        return false;
+                    }
                     onActionUpOrCancel();
                 }
                 activePointerId = INVALID_POINTER;
@@ -403,13 +413,19 @@ public class TestLayout extends FrameLayout implements NestedScrollingParent, Ne
         return true;
     }
 
-    private boolean canFling(float velocity) {
-        int minFlingVelocity = ViewConfiguration.get(getContext()).getScaledMinimumFlingVelocity();
-        int maxFlingVelocity = ViewConfiguration.get(getContext()).getScaledMaximumFlingVelocity();
-        if (Math.abs(velocity) > minFlingVelocity && Math.abs(velocity) < maxFlingVelocity) {
-            return true;
+    private void flingToDefault(int velocityY) {
+        mScroller.fling(
+                0, 0,
+                0, velocityY,
+                0, 0,
+                0, (int) Math.ceil(overScrollTop));
+        if (mScroller.computeScrollOffset()) {
+            ViewCompat.postInvalidateOnAnimation(this);
         }
-        return false;
+    }
+
+    private boolean canFlingUp(float velocity) {
+        return velocity < 0 && Math.abs(velocity) > minVelocity && Math.abs(velocity) < maxVelocity;
     }
 
     private void onMoveDown(MotionEvent ev) {
@@ -511,7 +527,7 @@ public class TestLayout extends FrameLayout implements NestedScrollingParent, Ne
     @Override
     public void onStopNestedScroll(View target) {
         nestedScrollingParentHelper.onStopNestedScroll(target);
-        onActionUpOrCancel();
+//        onActionUpOrCancel();
         stopNestedScroll();
     }
 
@@ -547,15 +563,13 @@ public class TestLayout extends FrameLayout implements NestedScrollingParent, Ne
 
     @Override
     public boolean onNestedFling(View target, float velocityX, float velocityY, boolean consumed) {
-        System.out.println("onNestedFling");
         return dispatchNestedFling(velocityX, velocityY, consumed);
     }
 
     @Override
     public boolean onNestedPreFling(View target, float velocityX, float velocityY) {
-//        System.out.println("overScrollTop=" + overScrollTop);
-//        mScroller.fling(0, 0, 0, (int) velocityY, 0, 0, Integer.MIN_VALUE, Integer.MAX_VALUE);
-//        ViewCompat.postInvalidateOnAnimation(this);
+        //回到初始位置
+        flingToDefault((int) velocityY);
         return dispatchNestedPreFling(velocityX, velocityY);
     }
 
@@ -566,32 +580,21 @@ public class TestLayout extends FrameLayout implements NestedScrollingParent, Ne
 
     @Override
     public void computeScroll() {
-//        super.computeScroll();
-//        if (mScroller.computeScrollOffset()) {
-//            System.out.println("getCurrY=" + mScroller.getCurrY());
-//            int dy = oldCurrY - mScroller.getCurrY();
-//            onActionMove(dy);
-//            oldCurrY = mScroller.getCurrY();
-//            System.out.println("dy="+dy);
-//            ViewCompat.postInvalidateOnAnimation(this);
-//        }
+        super.computeScroll();
+        if (mScroller.computeScrollOffset()) {
+            int dy = oldCurrY - mScroller.getCurrY();
+            onActionMove(dy, false);
+            oldCurrY = mScroller.getCurrY();
+            ViewCompat.postInvalidateOnAnimation(this);
+
+        } else {
+            oldCurrY = 0;
+        }
     }
 
     public interface OnRefreshListener {
 
         void onRefresh();
-    }
-
-    public static class LayoutParams extends ViewGroup.MarginLayoutParams {
-
-        public LayoutParams(Context c, AttributeSet attrs) {
-            super(c, attrs);
-        }
-
-        public LayoutParams(int width, int height) {
-            super(width, height);
-        }
-
     }
 
     private class SimpleAnimatorListener implements Animator.AnimatorListener {

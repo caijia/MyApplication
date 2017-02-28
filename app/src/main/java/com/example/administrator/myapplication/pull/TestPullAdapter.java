@@ -14,6 +14,24 @@ import com.example.administrator.myapplication.R;
 
 public class TestPullAdapter extends RecyclerView.Adapter<TestPullAdapter.TestPullVH> {
 
+    String[] s = {
+            "阿宝",
+            "愿",
+            "丰盈商行",
+            "ACDB168A",
+            "酷爱着宁静",
+            "小猪追傻猪我",
+            "国际米兰球迷",
+            "fetters我我",
+            "sosok",
+            "宇",
+            "A§j",
+            "吃货",
+            "你若信我我必不负你我我必不负你我我必不负你",
+            "sea",
+            "有事没事",
+
+    };
     @Override
     public TestPullVH onCreateViewHolder(ViewGroup parent, int viewType) {
         View view = LayoutInflater.from(parent.getContext())
@@ -24,20 +42,23 @@ public class TestPullAdapter extends RecyclerView.Adapter<TestPullAdapter.TestPu
     @Override
     public void onBindViewHolder(TestPullVH holder, int position) {
         holder.textView.setText("ITEM" + position);
+        holder.textView1.setText("ITEM" + s[position]);
     }
 
     @Override
     public int getItemCount() {
-        return 15;
+        return s.length;
     }
 
     static class TestPullVH extends RecyclerView.ViewHolder {
 
         private TextView textView;
+        private TextView textView1;
 
         public TestPullVH(View itemView) {
             super(itemView);
             textView = (TextView) itemView.findViewById(R.id.test_view);
+            textView1 = (TextView) itemView.findViewById(R.id.text1);
         }
     }
 }
