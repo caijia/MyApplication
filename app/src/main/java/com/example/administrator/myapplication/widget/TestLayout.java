@@ -30,19 +30,21 @@ public class TestLayout extends FrameLayout implements NestedScrollingParent, Ne
     private static final float DRAG_RATE = 0.45f;
     private static final int DEFAULT_DRAG_RANGE_DIP = 260;
     private static final int ANIM_DEFAULT_DURATION = 300;
+
     private static final int DEFAULT = 1;
     private static final int PULL_TO_REFRESH = 2;
     private static final int RELEASE_TO_REFRESH = 3;
     private static final int REFRESHING = 4;
     private static final int REFRESH_COMPLETE = 5;
     private static final int ANIM_DEFAULT_DELAY = 500;
-    private static final String TAG = "event";
+    private int currentState = DEFAULT;
+
     protected View headerView;
     protected View contentView;
     protected RefreshTrigger refreshTrigger;
     private float overScrollTop;
     private float dragRange;
-    private int currentState;
+
     private ValueAnimator animator;
     private OnRefreshListener onRefreshListener;
     private int touchSlop;
@@ -118,9 +120,14 @@ public class TestLayout extends FrameLayout implements NestedScrollingParent, Ne
     }
 
     private void onActionMove(float deltaY, boolean dragRate) {
-//        if (isRefreshingOrAnimRunning()) return;
+        if (isAnimRunning() || currentState == REFRESH_COMPLETE) {
+            return;
+        }
         overScrollTop += deltaY * (dragRate ? DRAG_RATE : 1);
-        overScrollTop = clampValue(0, dragRange, overScrollTop);
+        overScrollTop = clampValue(
+                0, //min
+                currentState == REFRESHING ? headerView.getMeasuredHeight(): dragRange, //max
+                overScrollTop); //value
         headerView.setTranslationY(overScrollTop);
         contentView.setTranslationY(overScrollTop);
         if (refreshTrigger != null) {
@@ -144,10 +151,19 @@ public class TestLayout extends FrameLayout implements NestedScrollingParent, Ne
     private void stateMapAnimation() {
         switch (currentState) {
             case DEFAULT: {
-                isBeginDragged = false;
                 if (refreshTrigger != null) {
                     refreshTrigger.onReset();
                 }
+
+                if (!mScroller.isFinished()) {
+                    mScroller.abortAnimation();
+                }
+
+                if (animator != null) {
+                    animator.cancel();
+                }
+                activePointerId = INVALID_POINTER;
+                isBeginDragged = false;
                 break;
             }
 
@@ -275,11 +291,10 @@ public class TestLayout extends FrameLayout implements NestedScrollingParent, Ne
 
     @Override
     public boolean onInterceptTouchEvent(MotionEvent ev) {
-
-        if (!isEnabled() || canChildScrollUp() || isAnimRunning()) {
+        if (!isEnabled() || canChildScrollUp() || isAnimRunning()
+                || currentState == REFRESH_COMPLETE) {
             return false;
         }
-
         addVelocityTracker(ev);
 
         int action = ev.getActionMasked();
@@ -333,10 +348,10 @@ public class TestLayout extends FrameLayout implements NestedScrollingParent, Ne
 
     @Override
     public boolean onTouchEvent(MotionEvent ev) {
-        if (!isEnabled() || canChildScrollUp() || isAnimRunning()) {
+        if (!isEnabled() || canChildScrollUp() || isAnimRunning()
+                || currentState == REFRESH_COMPLETE) {
             return false;
         }
-
         addVelocityTracker(ev);
 
         int action = ev.getActionMasked();
@@ -393,7 +408,6 @@ public class TestLayout extends FrameLayout implements NestedScrollingParent, Ne
                 computeVelocity();
                 int velocityY = (int) velocityTracker.getYVelocity(activePointerId);
                 boolean canFlingUp = canFlingUp(velocityY);
-                System.out.println("velocityY=" + velocityY + "--canFling=" + canFlingUp);
                 if (canFlingUp) {
                     //回到初始位置
                     flingToDefault(-velocityY);
@@ -419,13 +433,15 @@ public class TestLayout extends FrameLayout implements NestedScrollingParent, Ne
                 0, velocityY,
                 0, 0,
                 0, (int) Math.ceil(overScrollTop));
+        System.out.println("overScrollTop="+(int) Math.ceil(overScrollTop));
         if (mScroller.computeScrollOffset()) {
             ViewCompat.postInvalidateOnAnimation(this);
         }
     }
 
     private boolean canFlingUp(float velocity) {
-        return velocity < 0 && Math.abs(velocity) > minVelocity && Math.abs(velocity) < maxVelocity;
+        return velocity < 0 && Math.abs(velocity) > minVelocity && Math.abs(velocity) < maxVelocity
+                && currentState == REFRESHING;
     }
 
     private void onMoveDown(MotionEvent ev) {
@@ -527,17 +543,22 @@ public class TestLayout extends FrameLayout implements NestedScrollingParent, Ne
     @Override
     public void onStopNestedScroll(View target) {
         nestedScrollingParentHelper.onStopNestedScroll(target);
-//        onActionUpOrCancel();
+        //fling or scroll,当fling的时候,fling结束时才调用onActionUpOrCancel
+        if (mScroller.isFinished() && (currentState != REFRESHING
+                && currentState != REFRESH_COMPLETE) && !isAnimRunning()) {
+            onActionUpOrCancel();
+        }
         stopNestedScroll();
     }
 
     @Override
-    public void onNestedScroll(View target, int dxConsumed, int dyConsumed, int dxUnconsumed, int dyUnconsumed) {
+    public void onNestedScroll(View target, int dxConsumed, int dyConsumed,
+                               int dxUnconsumed, int dyUnconsumed) {
         dispatchNestedScroll(dxConsumed, dyConsumed, dxUnconsumed, dyUnconsumed,
                 mParentOffsetInWindow);
-
         int dy = dyUnconsumed + mParentOffsetInWindow[1];
-        if (dy < 0 && !canChildScrollUp()) {
+        //move down
+        if (dy < 0) {
             onActionMove(Math.abs(dyUnconsumed));
         }
     }
@@ -568,8 +589,12 @@ public class TestLayout extends FrameLayout implements NestedScrollingParent, Ne
 
     @Override
     public boolean onNestedPreFling(View target, float velocityX, float velocityY) {
-        //回到初始位置
-        flingToDefault((int) velocityY);
+        //回到初始位置 velocity < 0 down
+        if (velocityY > 0) {
+            if (currentState == REFRESHING) {
+                flingToDefault((int) velocityY);
+            }
+        }
         return dispatchNestedPreFling(velocityX, velocityY);
     }
 

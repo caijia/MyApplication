@@ -25,7 +25,6 @@ public class WightWrapTextView extends TextView {
 
     public WightWrapTextView(Context context, AttributeSet attrs) {
         this(context, attrs, 0);
-        System.out.println(toString());
     }
 
     public WightWrapTextView(Context context, AttributeSet attrs, int defStyleAttr) {
