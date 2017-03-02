@@ -45,7 +45,7 @@ public class ScrollerLayout extends FrameLayout {
 
     public void fling() {
         System.out.println("height=" + (child.getHeight() - getHeight()));
-        mScroller.fling(0, 0, 0, 2600, 0, 0, 0,76);
+        mScroller.fling(0, 160, 0, -4600, 0, 0, 0,160);
         invalidate();
     }
 
@@ -56,7 +56,7 @@ public class ScrollerLayout extends FrameLayout {
             int currX = mScroller.getCurrX();
             int currY = mScroller.getCurrY();
             System.out.println("currY="+currY);
-//            scrollTo(currX,currY);
+            scrollTo(currX,currY);
             invalidate();
         }
     }

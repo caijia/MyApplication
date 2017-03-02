@@ -3,7 +3,6 @@ package com.example.administrator.myapplication.widget;
 import android.animation.Animator;
 import android.animation.ValueAnimator;
 import android.content.Context;
-import android.support.annotation.Nullable;
 import android.support.v4.view.NestedScrollingChild;
 import android.support.v4.view.NestedScrollingChildHelper;
 import android.support.v4.view.NestedScrollingParent;
@@ -40,9 +39,9 @@ public class TestLayout extends FrameLayout implements NestedScrollingParent, Ne
     private int currentState = DEFAULT;
 
     protected View headerView;
-    protected View contentView;
+    protected View target;
     protected RefreshTrigger refreshTrigger;
-    private float overScrollTop;
+    private float scrollDistance;
     private float dragRange;
 
     private ValueAnimator animator;
@@ -63,6 +62,11 @@ public class TestLayout extends FrameLayout implements NestedScrollingParent, Ne
     private float minVelocity;
     private float maxVelocity;
     private int oldCurrY;
+
+    /**
+     * 刷新时是否固定头部
+     */
+    private boolean refreshingPinHeader;
 
     public TestLayout(Context context) {
         this(context, null);
@@ -89,12 +93,6 @@ public class TestLayout extends FrameLayout implements NestedScrollingParent, Ne
                 getContext().getResources().getDisplayMetrics()));
     }
 
-    private void onActionDown() {
-        if (refreshTrigger != null) {
-            refreshTrigger.onStart(headerView.getMeasuredHeight());
-        }
-    }
-
     private void addVelocityTracker(MotionEvent event) {
         if (velocityTracker == null) {
             velocityTracker = VelocityTracker.obtain();
@@ -115,28 +113,48 @@ public class TestLayout extends FrameLayout implements NestedScrollingParent, Ne
         }
     }
 
-    private void onActionMove(float deltaY) {
-        onActionMove(deltaY, true);
+    private void onActionDown() {
+        if (refreshTrigger != null) {
+            refreshTrigger.onStart(headerView.getMeasuredHeight());
+        }
     }
 
-    private void onActionMove(float deltaY, boolean dragRate) {
+    private void onActionMove(float deltaY) {
         if (isAnimRunning() || currentState == REFRESH_COMPLETE) {
             return;
         }
-        overScrollTop += deltaY * (dragRate ? DRAG_RATE : 1);
-        overScrollTop = clampValue(
+
+        scrollDistance += deltaY * (currentState == REFRESHING ? 1 : DRAG_RATE);
+        scrollDistance = clampValue(
                 0, //min
                 currentState == REFRESHING ? headerView.getMeasuredHeight(): dragRange, //max
-                overScrollTop); //value
-        headerView.setTranslationY(overScrollTop);
-        contentView.setTranslationY(overScrollTop);
-        if (refreshTrigger != null) {
-            refreshTrigger.onMove(overScrollTop, headerView.getMeasuredHeight(),
-                    currentState == REFRESHING);
+                scrollDistance); //value
+
+        scroll();
+
+        if (refreshTrigger != null && currentState != REFRESHING) {
+            refreshTrigger.onMove(scrollDistance, headerView.getMeasuredHeight());
+        }
+    }
+
+    private void scroll() {
+        if (onScrollListener != null) {
+            boolean consume = onScrollListener.onScroll(scrollDistance, headerView, target);
+            if (!consume) {
+                headerView.setTranslationY(scrollDistance);
+                target.setTranslationY(scrollDistance);
+            }
+
+        } else {
+            headerView.setTranslationY(scrollDistance);
+            target.setTranslationY(scrollDistance);
         }
     }
 
     private void onActionUpOrCancel() {
+        if (currentState == REFRESHING || currentState == REFRESH_COMPLETE || isAnimRunning()) {
+            return;
+        }
         computeState();
         stateMapAnimation();
     }
@@ -168,14 +186,12 @@ public class TestLayout extends FrameLayout implements NestedScrollingParent, Ne
             }
 
             case PULL_TO_REFRESH: {
-                animator(headerView, overScrollTop, 0,
-                        ANIM_DEFAULT_DURATION, 0, new SimpleAnimatorListener());
+                animator(scrollDistance, 0, ANIM_DEFAULT_DURATION, 0);
                 break;
             }
 
             case RELEASE_TO_REFRESH: {
-                animator(headerView, overScrollTop, headerView.getMeasuredHeight(),
-                        ANIM_DEFAULT_DURATION, 0, new SimpleAnimatorListener());
+                animator(scrollDistance, headerView.getMeasuredHeight(), ANIM_DEFAULT_DURATION, 0);
                 break;
             }
 
@@ -194,15 +210,13 @@ public class TestLayout extends FrameLayout implements NestedScrollingParent, Ne
                 if (refreshTrigger != null) {
                     refreshTrigger.onRefreshComplete();
                 }
-                animator(headerView, overScrollTop, 0,
-                        ANIM_DEFAULT_DURATION, ANIM_DEFAULT_DELAY, new SimpleAnimatorListener());
+                animator(scrollDistance, 0, ANIM_DEFAULT_DURATION, ANIM_DEFAULT_DELAY);
                 break;
             }
         }
     }
 
-    private void animator(final View targetView, float start, float end, int duration, int delay,
-                          @Nullable Animator.AnimatorListener listener) {
+    private void animator(float start, float end, int duration, int delay) {
         if (animator != null && (animator.isStarted() || animator.isRunning())) {
             animator.cancel();
             return;
@@ -212,14 +226,11 @@ public class TestLayout extends FrameLayout implements NestedScrollingParent, Ne
         animator.addUpdateListener(new ValueAnimator.AnimatorUpdateListener() {
             @Override
             public void onAnimationUpdate(ValueAnimator animation) {
-                overScrollTop = (float) animation.getAnimatedValue();
-                targetView.setTranslationY(overScrollTop);
-                contentView.setTranslationY(overScrollTop);
+                scrollDistance = (float) animation.getAnimatedValue();
+                scroll();
             }
         });
-        if (listener != null) {
-            animator.addListener(listener);
-        }
+        animator.addListener(new SimpleAnimatorListener());
         animator.setStartDelay(delay);
         animator.start();
     }
@@ -229,16 +240,16 @@ public class TestLayout extends FrameLayout implements NestedScrollingParent, Ne
     }
 
     private void computeState() {
-        if (overScrollTop == 0) {
+        if (scrollDistance == 0) {
             currentState = DEFAULT;
 
-        } else if (overScrollTop > headerView.getMeasuredHeight()) {
+        } else if (scrollDistance > headerView.getMeasuredHeight()) {
             currentState = RELEASE_TO_REFRESH;
 
-        } else if (overScrollTop == headerView.getMeasuredHeight()) {
+        } else if (scrollDistance == headerView.getMeasuredHeight()) {
             currentState = REFRESHING;
 
-        } else if (overScrollTop < headerView.getMeasuredHeight()) {
+        } else if (scrollDistance < headerView.getMeasuredHeight()) {
             currentState = PULL_TO_REFRESH;
         }
     }
@@ -248,8 +259,8 @@ public class TestLayout extends FrameLayout implements NestedScrollingParent, Ne
         // if this is a List < L or another view that doesn't support nested
         // scrolling, ignore this request so that the vertical scroll event
         // isn't stolen
-        if ((android.os.Build.VERSION.SDK_INT < 21 && contentView instanceof AbsListView)
-                || (contentView != null && !ViewCompat.isNestedScrollingEnabled(contentView))) {
+        if ((android.os.Build.VERSION.SDK_INT < 21 && target instanceof AbsListView)
+                || (target != null && !ViewCompat.isNestedScrollingEnabled(target))) {
             // Nope.
         } else {
             super.requestDisallowInterceptTouchEvent(b);
@@ -265,34 +276,41 @@ public class TestLayout extends FrameLayout implements NestedScrollingParent, Ne
     @Override
     protected void onLayout(boolean changed, int l, int t, int r, int b) {
         headerView.layout(0, -headerView.getMeasuredHeight(), headerView.getMeasuredWidth(), 0);
-        contentView.layout(0, 0, contentView.getMeasuredWidth(), contentView.getMeasuredHeight());
+        target.layout(0, 0, target.getMeasuredWidth(), target.getMeasuredHeight());
     }
 
     @Override
     protected void onFinishInflate() {
         super.onFinishInflate();
-        if (getChildCount() != 2) {
+        int childCount = getChildCount();
+        if (childCount != 2) {
             throw new RuntimeException("only two child");
         }
 
-        View headerView = getChildAt(0);
-        contentView = getChildAt(1);
-        if (!(headerView instanceof RefreshTrigger)) {
+        for (int i = 0; i < childCount; i++) {
+            View child = getChildAt(i);
+            if (child instanceof RefreshTrigger) {
+                headerView = child;
+
+            } else {
+                target = child;
+            }
+        }
+
+        if (headerView == null) {
             throw new RuntimeException("header must be implements refreshTrigger");
         }
-        this.headerView = headerView;
         refreshTrigger = (RefreshTrigger) headerView;
 
     }
 
     private boolean canChildScrollUp() {
-        return ViewCompat.canScrollVertically(contentView, -1);
+        return ViewCompat.canScrollVertically(target, -1);
     }
 
     @Override
     public boolean onInterceptTouchEvent(MotionEvent ev) {
-        if (!isEnabled() || canChildScrollUp() || isAnimRunning()
-                || currentState == REFRESH_COMPLETE) {
+        if (!isEnabled() || canChildScrollUp()) {
             return false;
         }
         addVelocityTracker(ev);
@@ -323,7 +341,8 @@ public class TestLayout extends FrameLayout implements NestedScrollingParent, Ne
                 float diffY = y - initialMotionY;
 
                 if (!isBeginDragged && Math.abs(diffY) > Math.abs(diffX)
-                        && diffY > touchSlop) {
+                        && (diffY > touchSlop  //move down
+                        || (!refreshingPinHeader && scrollDistance > 0 && -diffY > touchSlop))) {
                     isBeginDragged = true;
                 }
 
@@ -348,8 +367,7 @@ public class TestLayout extends FrameLayout implements NestedScrollingParent, Ne
 
     @Override
     public boolean onTouchEvent(MotionEvent ev) {
-        if (!isEnabled() || canChildScrollUp() || isAnimRunning()
-                || currentState == REFRESH_COMPLETE) {
+        if (!isEnabled() || canChildScrollUp()) {
             return false;
         }
         addVelocityTracker(ev);
@@ -380,10 +398,16 @@ public class TestLayout extends FrameLayout implements NestedScrollingParent, Ne
                 float diffX = x - initialMotionX;
                 float diffY = y - initialMotionY;
 
-                if (!isBeginDragged && Math.abs(diffY) > Math.abs(diffX)
-                        && diffY > touchSlop) {
-                    isBeginDragged = true;
-                    deltaY = diffY - touchSlop;
+                if (!isBeginDragged && Math.abs(diffY) > Math.abs(diffX)) {
+                    if (diffY > touchSlop) {
+                        isBeginDragged = true;
+                        deltaY = diffY - touchSlop;
+                    }
+
+                    if (!refreshingPinHeader && scrollDistance > 0 && -diffY > touchSlop) {
+                        isBeginDragged = true;
+                        deltaY = diffY + touchSlop;
+                    }
                 }
 
                 if (isBeginDragged) {
@@ -407,15 +431,11 @@ public class TestLayout extends FrameLayout implements NestedScrollingParent, Ne
                 }
                 computeVelocity();
                 int velocityY = (int) velocityTracker.getYVelocity(activePointerId);
-                boolean canFlingUp = canFlingUp(velocityY);
-                if (canFlingUp) {
-                    //回到初始位置
-                    flingToDefault(-velocityY);
+                boolean canFling = canFling(velocityY);
+                if (!refreshingPinHeader && canFling) {
+                    fling(-velocityY);
 
                 } else {
-                    if (currentState == REFRESHING) {
-                        return false;
-                    }
                     onActionUpOrCancel();
                 }
                 activePointerId = INVALID_POINTER;
@@ -427,20 +447,35 @@ public class TestLayout extends FrameLayout implements NestedScrollingParent, Ne
         return true;
     }
 
-    private void flingToDefault(int velocityY) {
+    private void fling(int velocityY) {
+        int startY = (int) (headerView.getMeasuredHeight() - scrollDistance);
+        oldCurrY = startY;
         mScroller.fling(
-                0, 0,
-                0, velocityY,
-                0, 0,
-                0, (int) Math.ceil(overScrollTop));
-        System.out.println("overScrollTop="+(int) Math.ceil(overScrollTop));
+                0, startY, //init value
+                0, velocityY, //velocity
+                0, 0, // x
+                0, headerView.getMeasuredHeight()); //y
         if (mScroller.computeScrollOffset()) {
             ViewCompat.postInvalidateOnAnimation(this);
         }
     }
 
-    private boolean canFlingUp(float velocity) {
-        return velocity < 0 && Math.abs(velocity) > minVelocity && Math.abs(velocity) < maxVelocity
+    @Override
+    public void computeScroll() {
+        super.computeScroll();
+        if (mScroller.computeScrollOffset()) {
+            int dy = oldCurrY - mScroller.getCurrY();
+            onActionMove(dy);
+            oldCurrY = mScroller.getCurrY();
+            ViewCompat.postInvalidateOnAnimation(this);
+
+        } else {
+            oldCurrY = 0;
+        }
+    }
+
+    private boolean canFling(float velocity) {
+        return Math.abs(velocity) > minVelocity && Math.abs(velocity) < maxVelocity
                 && currentState == REFRESHING;
     }
 
@@ -472,8 +507,7 @@ public class TestLayout extends FrameLayout implements NestedScrollingParent, Ne
             stateMapAnimation();
 
         } else {
-            animator(headerView, 0, headerView.getMeasuredHeight(),
-                    ANIM_DEFAULT_DURATION, ANIM_DEFAULT_DELAY, new SimpleAnimatorListener());
+            animator(0, headerView.getMeasuredHeight(), ANIM_DEFAULT_DURATION, ANIM_DEFAULT_DELAY);
         }
     }
 
@@ -530,7 +564,7 @@ public class TestLayout extends FrameLayout implements NestedScrollingParent, Ne
 
     @Override
     public boolean onStartNestedScroll(View child, View target, int nestedScrollAxes) {
-        return isEnabled()
+        return isEnabled() && (!refreshingPinHeader || currentState == DEFAULT)
                 && (nestedScrollAxes & ViewCompat.SCROLL_AXIS_VERTICAL) != 0;
     }
 
@@ -544,8 +578,7 @@ public class TestLayout extends FrameLayout implements NestedScrollingParent, Ne
     public void onStopNestedScroll(View target) {
         nestedScrollingParentHelper.onStopNestedScroll(target);
         //fling or scroll,当fling的时候,fling结束时才调用onActionUpOrCancel
-        if (mScroller.isFinished() && (currentState != REFRESHING
-                && currentState != REFRESH_COMPLETE) && !isAnimRunning()) {
+        if (mScroller.isFinished()) {
             onActionUpOrCancel();
         }
         stopNestedScroll();
@@ -565,9 +598,9 @@ public class TestLayout extends FrameLayout implements NestedScrollingParent, Ne
 
     @Override
     public void onNestedPreScroll(View target, int dx, int dy, int[] consumed) {
-        if (dy > 0 && overScrollTop > 0) {
-            if (dy > overScrollTop) {
-                consumed[1] = (int) (dy - overScrollTop);
+        if (dy > 0 && scrollDistance > 0) {
+            if (dy > scrollDistance) {
+                consumed[1] = (int) (dy - scrollDistance);
 
             } else {
                 consumed[1] = dy;
@@ -589,11 +622,12 @@ public class TestLayout extends FrameLayout implements NestedScrollingParent, Ne
 
     @Override
     public boolean onNestedPreFling(View target, float velocityX, float velocityY) {
-        //回到初始位置 velocity < 0 down
+        //回到初始位置 velocity > 0 up
         if (velocityY > 0) {
             if (currentState == REFRESHING) {
-                flingToDefault((int) velocityY);
+                fling((int) velocityY);
             }
+            return scrollDistance > 0;
         }
         return dispatchNestedPreFling(velocityX, velocityY);
     }
@@ -603,23 +637,31 @@ public class TestLayout extends FrameLayout implements NestedScrollingParent, Ne
         return nestedScrollingParentHelper.getNestedScrollAxes();
     }
 
-    @Override
-    public void computeScroll() {
-        super.computeScroll();
-        if (mScroller.computeScrollOffset()) {
-            int dy = oldCurrY - mScroller.getCurrY();
-            onActionMove(dy, false);
-            oldCurrY = mScroller.getCurrY();
-            ViewCompat.postInvalidateOnAnimation(this);
-
-        } else {
-            oldCurrY = 0;
-        }
-    }
-
     public interface OnRefreshListener {
 
         void onRefresh();
+    }
+
+    public interface OnScrollListener{
+
+        /**
+         *
+         * @param scrollY 滑动和fling的距离
+         * @param headerView 头部View
+         * @param target 内容View
+         * @return true 表示不使用内部的滑动(headerView ,target)的逻辑
+         */
+        boolean onScroll(float scrollY,View headerView,View target);
+    }
+
+    public OnScrollListener onScrollListener;
+
+    public void setOnScrollListener(OnScrollListener onScrollListener) {
+        this.onScrollListener = onScrollListener;
+    }
+
+    public void setRefreshingPinHeader(boolean refreshingPinHeader) {
+        this.refreshingPinHeader = refreshingPinHeader;
     }
 
     private class SimpleAnimatorListener implements Animator.AnimatorListener {

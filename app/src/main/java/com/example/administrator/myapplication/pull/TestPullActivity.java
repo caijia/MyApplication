@@ -5,7 +5,9 @@ import android.os.Handler;
 import android.support.annotation.Nullable;
 import android.support.v4.widget.SwipeRefreshLayout;
 import android.support.v7.app.AppCompatActivity;
+import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
+import android.view.View;
 import android.widget.ListView;
 
 import com.example.administrator.myapplication.R;
@@ -15,10 +17,9 @@ import com.example.administrator.myapplication.widget.TestLayout;
  * Created by cai.jia on 2017/2/10 0010
  */
 
-public class TestPullActivity extends AppCompatActivity implements TestLayout.OnRefreshListener, SwipeRefreshLayout.OnRefreshListener {
+public class TestPullActivity extends AppCompatActivity implements TestLayout.OnRefreshListener, SwipeRefreshLayout.OnRefreshListener, TestLayout.OnScrollListener {
 
     TestLayout testLayout;
-//    SwipeRefreshLayout testLayout;
     private RecyclerView recyclerView;
     private ListView listView;
     private Handler handler = new Handler();
@@ -29,12 +30,13 @@ public class TestPullActivity extends AppCompatActivity implements TestLayout.On
         setContentView(R.layout.activity_pull);
 
         testLayout = (TestLayout) findViewById(R.id.test_layout);
-//        testLayout = (SwipeRefreshLayout) findViewById(R.id.test_layout);
-        listView = (ListView) findViewById(R.id.list_view);
-        listView.setAdapter(new TestListAdapter(this));
-//        recyclerView = (RecyclerView) findViewById(R.id.recycler_view);
-//        recyclerView.setLayoutManager(new LinearLayoutManager(this));
-//        recyclerView.setAdapter(new TestPullAdapter());
+        testLayout.setRefreshingPinHeader(true);
+        testLayout.setOnScrollListener(this);
+//        listView = (ListView) findViewById(R.id.list_view);
+//        listView.setAdapter(new TestListAdapter(this));
+        recyclerView = (RecyclerView) findViewById(R.id.recycler_view);
+        recyclerView.setLayoutManager(new LinearLayoutManager(this));
+        recyclerView.setAdapter(new TestPullAdapter());
         testLayout.setOnRefreshListener(this);
     }
 
@@ -46,5 +48,14 @@ public class TestPullActivity extends AppCompatActivity implements TestLayout.On
                 testLayout.setRefreshing(false);
             }
         }, 4000);
+    }
+
+    @Override
+    public boolean onScroll(float scrollY, View headerView, View target) {
+        System.out.println("scrollY="+scrollY);
+//        headerView.bringToFront();
+        headerView.setTranslationY(scrollY);
+//        target.setTranslationY(scrollY);
+        return true;
     }
 }

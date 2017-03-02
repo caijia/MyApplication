@@ -8,7 +8,7 @@ public interface RefreshTrigger {
 
     void onStart(float headerViewHeight);
 
-    void onMove(float scrollTop, float headerViewHeight,boolean isRefreshing);
+    void onMove(float scrollTop, float headerViewHeight);
 
     void onRefreshing();
 

@@ -3,11 +3,10 @@ package com.example.administrator.myapplication.scroller;
 import android.os.Bundle;
 import android.support.annotation.Nullable;
 import android.support.v7.app.AppCompatActivity;
-import android.support.v7.widget.LinearLayoutManager;
-import android.support.v7.widget.RecyclerView;
+import android.view.View;
 
 import com.example.administrator.myapplication.R;
-import com.example.administrator.myapplication.pull.TestPullAdapter;
+import com.example.administrator.myapplication.widget.ScrollerLayout;
 
 /**
  * Created by cai.jia on 2017/2/23 0023
@@ -20,11 +19,16 @@ public class TestScrollerActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_scroller);
 
-        RecyclerView recyclerView = (RecyclerView) findViewById(R.id.recycler_view);
-        recyclerView.setLayoutManager(new LinearLayoutManager(this));
-        recyclerView.setAdapter(new TestPullAdapter());
+         scrollerLayout = (ScrollerLayout) findViewById(R.id.test_layout);
+
 
     }
 
+    ScrollerLayout scrollerLayout;
+
+
+    public void testClick(View view) {
+        scrollerLayout.fling();
+    }
 
 }

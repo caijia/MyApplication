@@ -57,11 +57,7 @@ public class ClassicRefreshHeaderView extends RelativeLayout implements RefreshT
     }
 
     @Override
-    public void onMove(float moved, float headerViewHeight, boolean isRefreshing) {
-        if (isRefreshing) {
-            return;
-        }
-
+    public void onMove(float moved, float headerViewHeight) {
         ivArrow.setVisibility(VISIBLE);
         progressBar.setVisibility(GONE);
         ivSuccess.setVisibility(GONE);
