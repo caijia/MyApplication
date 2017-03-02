@@ -3,6 +3,7 @@ package com.example.administrator.myapplication.widget;
 import android.animation.Animator;
 import android.animation.ValueAnimator;
 import android.content.Context;
+import android.support.annotation.Nullable;
 import android.support.v4.view.NestedScrollingChild;
 import android.support.v4.view.NestedScrollingChildHelper;
 import android.support.v4.view.NestedScrollingParent;
@@ -36,14 +37,13 @@ public class TestLayout extends FrameLayout implements NestedScrollingParent, Ne
     private static final int REFRESHING = 4;
     private static final int REFRESH_COMPLETE = 5;
     private static final int ANIM_DEFAULT_DELAY = 500;
-    private int currentState = DEFAULT;
-
+    public OnScrollListener onScrollListener;
     protected View headerView;
     protected View target;
     protected RefreshTrigger refreshTrigger;
+    private int currentState = DEFAULT;
     private float scrollDistance;
     private float dragRange;
-
     private ValueAnimator animator;
     private OnRefreshListener onRefreshListener;
     private int touchSlop;
@@ -57,16 +57,15 @@ public class TestLayout extends FrameLayout implements NestedScrollingParent, Ne
     private int[] mParentOffsetInWindow = new int[2];
     private int[] parentConsumed = new int[2];
     private ScrollerCompat mScroller;
-
     private VelocityTracker velocityTracker;
     private float minVelocity;
     private float maxVelocity;
     private int oldCurrY;
-
     /**
      * 刷新时是否固定头部
      */
     private boolean refreshingPinHeader;
+    private OnChildScrollUpCallback childScrollUpCallback;
 
     public TestLayout(Context context) {
         this(context, null);
@@ -127,7 +126,7 @@ public class TestLayout extends FrameLayout implements NestedScrollingParent, Ne
         scrollDistance += deltaY * (currentState == REFRESHING ? 1 : DRAG_RATE);
         scrollDistance = clampValue(
                 0, //min
-                currentState == REFRESHING ? headerView.getMeasuredHeight(): dragRange, //max
+                currentState == REFRESHING ? headerView.getMeasuredHeight() : dragRange, //max
                 scrollDistance); //value
 
         scroll();
@@ -305,6 +304,9 @@ public class TestLayout extends FrameLayout implements NestedScrollingParent, Ne
     }
 
     private boolean canChildScrollUp() {
+        if (childScrollUpCallback != null) {
+            return childScrollUpCallback.canChildScrollUp(this, target);
+        }
         return ViewCompat.canScrollVertically(target, -1);
     }
 
@@ -637,24 +639,9 @@ public class TestLayout extends FrameLayout implements NestedScrollingParent, Ne
         return nestedScrollingParentHelper.getNestedScrollAxes();
     }
 
-    public interface OnRefreshListener {
-
-        void onRefresh();
+    public void setOnChildScrollUpCallback(OnChildScrollUpCallback callback) {
+        this.childScrollUpCallback = callback;
     }
-
-    public interface OnScrollListener{
-
-        /**
-         *
-         * @param scrollY 滑动和fling的距离
-         * @param headerView 头部View
-         * @param target 内容View
-         * @return true 表示不使用内部的滑动(headerView ,target)的逻辑
-         */
-        boolean onScroll(float scrollY,View headerView,View target);
-    }
-
-    public OnScrollListener onScrollListener;
 
     public void setOnScrollListener(OnScrollListener onScrollListener) {
         this.onScrollListener = onScrollListener;
@@ -662,6 +649,26 @@ public class TestLayout extends FrameLayout implements NestedScrollingParent, Ne
 
     public void setRefreshingPinHeader(boolean refreshingPinHeader) {
         this.refreshingPinHeader = refreshingPinHeader;
+    }
+
+    public interface OnRefreshListener {
+
+        void onRefresh();
+    }
+
+    public interface OnScrollListener {
+
+        /**
+         * @param scrollY    滑动和fling的距离
+         * @param headerView 头部View
+         * @param target     内容View
+         * @return true 表示不使用内部的滑动(headerView ,target)的逻辑
+         */
+        boolean onScroll(float scrollY, View headerView, View target);
+    }
+
+    public interface OnChildScrollUpCallback {
+        boolean canChildScrollUp(TestLayout parent, @Nullable View child);
     }
 
     private class SimpleAnimatorListener implements Animator.AnimatorListener {
