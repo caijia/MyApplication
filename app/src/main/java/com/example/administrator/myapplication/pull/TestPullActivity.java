@@ -30,8 +30,8 @@ public class TestPullActivity extends AppCompatActivity implements TestLayout.On
         setContentView(R.layout.activity_pull);
 
         testLayout = (TestLayout) findViewById(R.id.test_layout);
-        testLayout.setRefreshingPinHeader(true);
-        testLayout.setOnScrollListener(this);
+//        testLayout.setRefreshingPinHeader(true);
+//        testLayout.setOnScrollListener(this);
 //        listView = (ListView) findViewById(R.id.list_view);
 //        listView.setAdapter(new TestListAdapter(this));
         recyclerView = (RecyclerView) findViewById(R.id.recycler_view);
