@@ -2,8 +2,10 @@ package com.example.administrator.myapplication.widget;
 
 import android.animation.Animator;
 import android.animation.ValueAnimator;
+import android.annotation.TargetApi;
 import android.content.Context;
-import android.support.annotation.Nullable;
+import android.content.res.TypedArray;
+import android.os.Build;
 import android.support.v4.view.NestedScrollingChild;
 import android.support.v4.view.NestedScrollingChildHelper;
 import android.support.v4.view.NestedScrollingParent;
@@ -19,15 +21,17 @@ import android.view.ViewConfiguration;
 import android.widget.AbsListView;
 import android.widget.FrameLayout;
 
+import com.example.administrator.myapplication.R;
+
 import static android.support.v4.widget.ViewDragHelper.INVALID_POINTER;
 
 /**
  * Created by cai.jia on 2017/2/10 0010
  */
 
-public class TestLayout extends FrameLayout implements NestedScrollingParent, NestedScrollingChild {
+public class RefreshLayout extends FrameLayout implements NestedScrollingParent, NestedScrollingChild {
 
-    private static final float DRAG_RATE = 0.45f;
+    private static final float DRAG_RADIO = 0.45f;
     private static final int DEFAULT_DRAG_RANGE_DIP = 260;
     private static final int ANIM_DEFAULT_DURATION = 300;
 
@@ -65,17 +69,38 @@ public class TestLayout extends FrameLayout implements NestedScrollingParent, Ne
      * 刷新时是否固定头部
      */
     private boolean refreshingPinHeader;
+
+    /**
+     * 刷新完成后,延迟多久执行动画
+     */
+    private int completeDelay;
+
+    /**
+     * 头部动画执行时间
+     */
+    private int animationDuration;
+
+    /**
+     * 拖动的比率
+     */
+    private float dragRadio;
+
+    /**
+     * 需要scroll多少距离才能触发刷新(刷新的临界值)
+     */
+    private int refreshDistance;
+
     private OnChildScrollUpCallback childScrollUpCallback;
 
-    public TestLayout(Context context) {
+    public RefreshLayout(Context context) {
         this(context, null);
     }
 
-    public TestLayout(Context context, AttributeSet attrs) {
+    public RefreshLayout(Context context, AttributeSet attrs) {
         this(context, attrs, 0);
     }
 
-    public TestLayout(Context context, AttributeSet attrs, int defStyleAttr) {
+    public RefreshLayout(Context context, AttributeSet attrs, int defStyleAttr) {
         super(context, attrs, defStyleAttr);
         ViewConfiguration configuration = ViewConfiguration.get(context);
         touchSlop = configuration.getScaledTouchSlop();
@@ -85,6 +110,33 @@ public class TestLayout extends FrameLayout implements NestedScrollingParent, Ne
         nestedScrollingChildHelper = new NestedScrollingChildHelper(this);
         nestedScrollingParentHelper = new NestedScrollingParentHelper(this);
         mScroller = ScrollerCompat.create(context);
+        getAttributes(context, attrs);
+    }
+
+    @TargetApi(Build.VERSION_CODES.LOLLIPOP)
+    public RefreshLayout(Context context, AttributeSet attrs, int defStyleAttr, int defStyleRes) {
+        super(context, attrs, defStyleAttr, defStyleRes);
+        getAttributes(context, attrs);
+    }
+
+    private void getAttributes(Context context, AttributeSet attrs) {
+        TypedArray a = null;
+        try {
+            a = context.obtainStyledAttributes(attrs, R.styleable.RefreshLayout);
+            dragRadio = a.getFloat(R.styleable.RefreshLayout_dragRadio, DRAG_RADIO);
+            dragRadio = clampValue(0, 1, dragRadio);
+            animationDuration = a.getInt(
+                    R.styleable.RefreshLayout_animation_duration, ANIM_DEFAULT_DURATION);
+            completeDelay = a.getInt(
+                    R.styleable.RefreshLayout_complete_delay_duration, ANIM_DEFAULT_DELAY);
+            refreshingPinHeader = a.getBoolean(
+                    R.styleable.RefreshLayout_refreshing_pin_header, false);
+
+        } finally {
+            if (a != null) {
+                a.recycle();
+            }
+        }
     }
 
     private float dpToPx(float dp) {
@@ -123,10 +175,10 @@ public class TestLayout extends FrameLayout implements NestedScrollingParent, Ne
             return;
         }
 
-        scrollDistance += deltaY * (currentState == REFRESHING ? 1 : DRAG_RATE);
+        scrollDistance += deltaY * (currentState == REFRESHING ? 1 : dragRadio);
         scrollDistance = clampValue(
                 0, //min
-                currentState == REFRESHING ? headerView.getMeasuredHeight() : dragRange, //max
+                currentState == REFRESHING ? refreshDistance : dragRange, //max
                 scrollDistance); //value
 
         scroll();
@@ -185,12 +237,12 @@ public class TestLayout extends FrameLayout implements NestedScrollingParent, Ne
             }
 
             case PULL_TO_REFRESH: {
-                animator(scrollDistance, 0, ANIM_DEFAULT_DURATION, 0);
+                animator(scrollDistance, 0, animationDuration, 0);
                 break;
             }
 
             case RELEASE_TO_REFRESH: {
-                animator(scrollDistance, headerView.getMeasuredHeight(), ANIM_DEFAULT_DURATION, 0);
+                animator(scrollDistance, refreshDistance, animationDuration, 0);
                 break;
             }
 
@@ -209,7 +261,7 @@ public class TestLayout extends FrameLayout implements NestedScrollingParent, Ne
                 if (refreshTrigger != null) {
                     refreshTrigger.onRefreshComplete();
                 }
-                animator(scrollDistance, 0, ANIM_DEFAULT_DURATION, ANIM_DEFAULT_DELAY);
+                animator(scrollDistance, 0, animationDuration, completeDelay);
                 break;
             }
         }
@@ -242,13 +294,13 @@ public class TestLayout extends FrameLayout implements NestedScrollingParent, Ne
         if (scrollDistance == 0) {
             currentState = DEFAULT;
 
-        } else if (scrollDistance > headerView.getMeasuredHeight()) {
+        } else if (scrollDistance > refreshDistance) {
             currentState = RELEASE_TO_REFRESH;
 
-        } else if (scrollDistance == headerView.getMeasuredHeight()) {
+        } else if (scrollDistance == refreshDistance) {
             currentState = REFRESHING;
 
-        } else if (scrollDistance < headerView.getMeasuredHeight()) {
+        } else if (scrollDistance < refreshDistance) {
             currentState = PULL_TO_REFRESH;
         }
     }
@@ -267,9 +319,13 @@ public class TestLayout extends FrameLayout implements NestedScrollingParent, Ne
     }
 
     @Override
-    protected void onMeasure(int widthMeasureSpec, int heightMeasureSpec) {
-        super.onMeasure(widthMeasureSpec, heightMeasureSpec);
-        dragRange = Math.max(dpToPx(DEFAULT_DRAG_RANGE_DIP), headerView.getMeasuredHeight() * 2);
+    protected void onSizeChanged(int w, int h, int oldw, int oldh) {
+        super.onSizeChanged(w, h, oldw, oldh);
+        int headerHeight = headerView.getMeasuredHeight();
+        int customDragRange = refreshTrigger.dragRange(headerHeight);
+        dragRange = customDragRange == 0 ? headerHeight * 2 : customDragRange;
+        int distance = refreshTrigger.refreshDistance(headerHeight);
+        refreshDistance = distance <= 0 ? headerHeight : distance;
     }
 
     @Override
@@ -450,13 +506,13 @@ public class TestLayout extends FrameLayout implements NestedScrollingParent, Ne
     }
 
     private void fling(int velocityY) {
-        int startY = (int) (headerView.getMeasuredHeight() - scrollDistance);
+        int startY = (int) (refreshDistance - scrollDistance);
         oldCurrY = startY;
         mScroller.fling(
                 0, startY, //init value
                 0, velocityY, //velocity
                 0, 0, // x
-                0, headerView.getMeasuredHeight()); //y
+                0, refreshDistance); //y
         if (mScroller.computeScrollOffset()) {
             ViewCompat.postInvalidateOnAnimation(this);
         }
@@ -509,7 +565,7 @@ public class TestLayout extends FrameLayout implements NestedScrollingParent, Ne
             stateMapAnimation();
 
         } else {
-            animator(0, headerView.getMeasuredHeight(), ANIM_DEFAULT_DURATION, ANIM_DEFAULT_DELAY);
+            animator(0, refreshDistance, ANIM_DEFAULT_DURATION, ANIM_DEFAULT_DELAY);
         }
     }
 
@@ -593,7 +649,7 @@ public class TestLayout extends FrameLayout implements NestedScrollingParent, Ne
                 mParentOffsetInWindow);
         int dy = dyUnconsumed + mParentOffsetInWindow[1];
         //move down
-        if (dy < 0) {
+        if (dy < 0 && !canChildScrollUp()) {
             onActionMove(Math.abs(dyUnconsumed));
         }
     }
@@ -668,7 +724,7 @@ public class TestLayout extends FrameLayout implements NestedScrollingParent, Ne
     }
 
     public interface OnChildScrollUpCallback {
-        boolean canChildScrollUp(TestLayout parent, @Nullable View child);
+        boolean canChildScrollUp(RefreshLayout parent, View child);
     }
 
     private class SimpleAnimatorListener implements Animator.AnimatorListener {

@@ -11,15 +11,15 @@ import android.view.View;
 import android.widget.ListView;
 
 import com.example.administrator.myapplication.R;
-import com.example.administrator.myapplication.widget.TestLayout;
+import com.example.administrator.myapplication.widget.RefreshLayout;
 
 /**
  * Created by cai.jia on 2017/2/10 0010
  */
 
-public class TestPullActivity extends AppCompatActivity implements TestLayout.OnRefreshListener, SwipeRefreshLayout.OnRefreshListener, TestLayout.OnScrollListener {
+public class TestPullActivity extends AppCompatActivity implements RefreshLayout.OnRefreshListener, SwipeRefreshLayout.OnRefreshListener, RefreshLayout.OnScrollListener {
 
-    TestLayout testLayout;
+    RefreshLayout testLayout;
     private RecyclerView recyclerView;
     private ListView listView;
     private Handler handler = new Handler();
@@ -29,7 +29,7 @@ public class TestPullActivity extends AppCompatActivity implements TestLayout.On
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_pull);
 
-        testLayout = (TestLayout) findViewById(R.id.test_layout);
+        testLayout = (RefreshLayout) findViewById(R.id.test_layout);
 //        testLayout.setRefreshingPinHeader(true);
 //        testLayout.setOnScrollListener(this);
 //        listView = (ListView) findViewById(R.id.list_view);

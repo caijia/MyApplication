@@ -110,4 +110,14 @@ public class ClassicRefreshHeaderView extends RelativeLayout implements RefreshT
         ivArrow.setVisibility(GONE);
         progressBar.setVisibility(GONE);
     }
+
+    @Override
+    public int refreshDistance(int headerViewHeight) {
+        return headerViewHeight;
+    }
+
+    @Override
+    public int dragRange(int headerViewHeight) {
+        return headerViewHeight * 2;
+    }
 }

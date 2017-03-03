@@ -3,7 +3,7 @@
     android:orientation="vertical" android:layout_width="match_parent"
     android:layout_height="match_parent">
 
-    <com.example.administrator.myapplication.widget.TestLayout
+    <com.example.administrator.myapplication.widget.RefreshLayout
         android:id="@+id/test_layout"
         android:layout_width="match_parent"
         android:layout_height="match_parent">
@@ -21,7 +21,7 @@
 
         <!--<include layout="@layout/test_pull_listview" />-->
 
-    </com.example.administrator.myapplication.widget.TestLayout>
+    </com.example.administrator.myapplication.widget.RefreshLayout>
 
     <!--<com.example.administrator.myapplication.widget.SwipeRefreshLayout1-->
         <!--android:id="@+id/test_layout"-->

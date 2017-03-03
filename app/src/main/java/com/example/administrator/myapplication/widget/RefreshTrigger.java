@@ -15,4 +15,8 @@ public interface RefreshTrigger {
     void onRefreshComplete();
 
     void onReset();
+
+    int refreshDistance(int headerViewHeight);
+
+    int dragRange(int headerViewHeight);
 }
