@@ -1,5 +1,7 @@
 package com.example.administrator.myapplication;
 
+import com.example.administrator.myapplication.http.Schedule;
+
 import org.junit.Test;
 
 
@@ -11,6 +13,7 @@ import org.junit.Test;
 public class ExampleUnitTest {
     @Test
     public void addition_isCorrect() throws Exception {
-
+        Schedule schedule = new Schedule();
+        schedule.start();
     }
 }

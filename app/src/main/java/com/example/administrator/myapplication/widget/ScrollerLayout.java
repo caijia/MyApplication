@@ -58,6 +58,13 @@ public class ScrollerLayout extends FrameLayout {
             System.out.println("currY="+currY);
             scrollTo(currX,currY);
             invalidate();
+        }else{
+            System.out.println("currentVelocity=" + mScroller.getCurrVelocity());
+        }
+
+        if (mScroller.isFinished()) {
+            System.out.println("finished");
+            System.out.println("currentVelocity=" + mScroller.getCurrVelocity());
         }
     }
 }
