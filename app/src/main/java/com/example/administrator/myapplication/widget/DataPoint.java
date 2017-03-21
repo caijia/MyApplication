@@ -6,8 +6,12 @@ package com.example.administrator.myapplication.widget;
 
 public interface DataPoint {
 
-    int getX();
+    float getX();
 
-    int getY();
+    float getY();
+
+    void setX(float x);
+
+    void setY(float y);
 
 }

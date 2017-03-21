@@ -47,7 +47,7 @@ public class GraphViewY extends View {
     private void init(Context context) {
         textPaint = new Paint();
         textPaint.setAntiAlias(true);
-        textPaint.setTextSize(spToPx(14f));
+        textPaint.setTextSize(spToPx(10f));
         textPaint.setColor(Color.BLACK);
 
         linePaint = new Paint();
@@ -76,7 +76,6 @@ public class GraphViewY extends View {
             int height = viewPort.getyCount() * viewPort.getSpacingY() + coordinateTextHeight;
             textRect.setEmpty();
             int width = computeWidth();
-            System.out.println("width="+width);
             setMeasuredDimension(
                     resolveSize(0, MeasureSpec.makeMeasureSpec(width, MeasureSpec.EXACTLY)),
                     resolveSize(0, MeasureSpec.makeMeasureSpec(height, MeasureSpec.EXACTLY)));
@@ -118,7 +117,6 @@ public class GraphViewY extends View {
                 int textHeight = textRect.height();
 
                 int x = (getWidth() - textRect.width()) / 2;
-                System.out.println("x="+x);
                 int y;
                 if (i == 0) {
                     y = getHeight();

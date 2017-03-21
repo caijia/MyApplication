@@ -8,6 +8,7 @@ import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
 import android.support.annotation.StyleRes;
 import android.util.AttributeSet;
+import android.view.View;
 import android.widget.HorizontalScrollView;
 import android.widget.LinearLayout;
 
@@ -16,7 +17,6 @@ import android.widget.LinearLayout;
  */
 
 public class GraphView extends LinearLayout {
-
 
     public GraphView(@NonNull Context context) {
         this(context, null);
@@ -53,6 +53,18 @@ public class GraphView extends LinearLayout {
         horizontalScrollView.addView(graphViewX);
         horizontalScrollView.setHorizontalScrollBarEnabled(false);
         addView(horizontalScrollView);
+
+        graphViewX.setOnClickListener(new OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                if (onGraphPointClickListener != null) {
+                    DataPoint point = graphViewX.getClickDataPoint();
+                    if (point != null) {
+                        onGraphPointClickListener.onGraphPointClick(point);
+                    }
+                }
+            }
+        });
     }
 
     public void addLineSeries(LineDataSeries lineDataSeries) {
@@ -62,10 +74,28 @@ public class GraphView extends LinearLayout {
         graphViewX.addLineSeries(lineDataSeries);
     }
 
+    public void addRectSeries(RectDataSeries rectDataSeries) {
+        if (rectDataSeries == null) {
+            return;
+        }
+        graphViewX.addRectSeries(rectDataSeries);
+    }
+
     public void setViewPort(ViewPort viewPort) {
         if (viewPort != null) {
             graphViewY.setViewPort(viewPort);
             graphViewX.setViewPort(viewPort);
         }
+    }
+
+    public interface OnGraphPointClickListener{
+
+        void onGraphPointClick(DataPoint point);
+    }
+
+    private OnGraphPointClickListener onGraphPointClickListener;
+
+    public void setOnGraphPointClickListener(OnGraphPointClickListener onGraphPointClickListener) {
+        this.onGraphPointClickListener = onGraphPointClickListener;
     }
 }

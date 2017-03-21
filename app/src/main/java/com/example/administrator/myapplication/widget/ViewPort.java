@@ -21,7 +21,7 @@ public class ViewPort {
 
     private int xCount;
 
-    private int yCount;
+    private String[] xTextArray;
 
     private float minY;
     /**
@@ -34,12 +34,21 @@ public class ViewPort {
      */
     private int spacingY;
 
+    private int yCount;
+
     public ViewPort() {
     }
 
-    public ViewPort(float minX, float maxX, int spacingX, int xCount,
-                    float minY, float maxY, int spacingY,int yCount) {
+    public String[] getxTextArray() {
+        return xTextArray;
+    }
 
+    public void setxTextArray(String[] xTextArray) {
+        this.xTextArray = xTextArray;
+    }
+
+    public ViewPort(float minX, float maxX, int spacingX, int xCount,
+                    float minY, float maxY, int spacingY, int yCount) {
         this.minX = minX;
         this.maxX = maxX;
         this.spacingX = spacingX;
