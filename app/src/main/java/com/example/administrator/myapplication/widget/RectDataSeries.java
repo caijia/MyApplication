@@ -86,20 +86,12 @@ public class RectDataSeries {
             return x;
         }
 
-        @Override
-        public void setX(float x) {
-            this.x = x;
-        }
 
         @Override
         public float getY() {
             return y;
         }
 
-        @Override
-        public void setY(float y) {
-            this.y = y;
-        }
 
         public int getColor() {
             return color;

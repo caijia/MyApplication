@@ -7,130 +7,49 @@ package com.example.administrator.myapplication.widget;
 
 public class ViewPort {
 
-    private float minX;
-
-    /**
-     * x坐标最大值
-     */
-    private float maxX;
-
     /**
      * x轴间隔
      */
     private int spacingX;
 
-    private int xCount;
+    private String[] textArrayX;
 
-    private String[] xTextArray;
-
-    private float minY;
-    /**
-     * y坐标最大值
-     */
-    private float maxY;
-
-    /**
-     * y坐标间隔
-     */
     private int spacingY;
 
-    private int yCount;
+    private String[] textArrayY;
 
     public ViewPort() {
-    }
-
-    public String[] getxTextArray() {
-        return xTextArray;
-    }
-
-    public void setxTextArray(String[] xTextArray) {
-        this.xTextArray = xTextArray;
-    }
-
-    public ViewPort(float minX, float maxX, int spacingX, int xCount,
-                    float minY, float maxY, int spacingY, int yCount) {
-        this.minX = minX;
-        this.maxX = maxX;
-        this.spacingX = spacingX;
-        this.xCount = xCount;
-        this.yCount = yCount;
-        this.minY = minY;
-        this.maxY = maxY;
-        this.spacingY = spacingY;
-    }
-
-    public float getMinX() {
-
-        return minX;
-    }
-
-    public void setMinX(float minX) {
-        this.minX = minX;
-    }
-
-    public float getMaxX() {
-        return maxX;
-    }
-
-    public void setMaxX(float maxX) {
-        this.maxX = maxX;
-    }
-
-    public int getSpacingX() {
-        return spacingX;
     }
 
     public void setSpacingX(int spacingX) {
         this.spacingX = spacingX;
     }
 
-    public int getxCount() {
-        return xCount;
-    }
-
-    public void setxCount(int xCount) {
-        this.xCount = xCount;
-    }
-
-    public int getyCount() {
-        return yCount;
-    }
-
-    public void setyCount(int yCount) {
-        this.yCount = yCount;
-    }
-
-    public float getMinY() {
-        return minY;
-    }
-
-    public void setMinY(float minY) {
-        this.minY = minY;
-    }
-
-    public float getMaxY() {
-        return maxY;
-    }
-
-    public void setMaxY(float maxY) {
-        this.maxY = maxY;
-    }
-
-    public int getSpacingY() {
-        return spacingY;
+    public void setTextArrayX(String[] textArrayX) {
+        this.textArrayX = textArrayX;
     }
 
     public void setSpacingY(int spacingY) {
         this.spacingY = spacingY;
     }
 
-    public float getStepY() {
-        float v = (maxY - minY) / yCount;
-        return v;
+    public void setTextArrayY(String[] textArrayY) {
+        this.textArrayY = textArrayY;
     }
 
-    public float getStepX(){
-        float v = (maxX - minX) / xCount;
-        return v;
+    public int getSpacingX() {
+        return spacingX;
+    }
+
+    public String[] getTextArrayX() {
+        return textArrayX;
+    }
+
+    public int getSpacingY() {
+        return spacingY;
+    }
+
+    public String[] getTextArrayY() {
+        return textArrayY;
     }
 }

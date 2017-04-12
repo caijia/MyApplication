@@ -11,8 +11,6 @@ import android.util.AttributeSet;
 import android.util.TypedValue;
 import android.view.View;
 
-import java.util.Locale;
-
 /**
  * Created by cai.jia on 2017/3/20 0020
  */
@@ -69,11 +67,17 @@ public class GraphViewY extends View {
                 getContext().getResources().getDisplayMetrics());
     }
 
+    private int getCount(){
+        String[] textArray = viewPort.getTextArrayY();
+        return textArray != null ? textArray.length : 0;
+    }
+
     @Override
     protected void onMeasure(int widthMeasureSpec, int heightMeasureSpec) {
         super.onMeasure(widthMeasureSpec, heightMeasureSpec);
         if (viewPort != null) {
-            int height = viewPort.getyCount() * viewPort.getSpacingY() + coordinateTextHeight;
+            int count = getCount();
+            int height = count * viewPort.getSpacingY();
             textRect.setEmpty();
             int width = computeWidth();
             setMeasuredDimension(
@@ -83,13 +87,12 @@ public class GraphViewY extends View {
     }
 
     private int computeWidth() {
-        int count = viewPort.getyCount();
-        float stepY = viewPort.getStepY();
-        float minY = viewPort.getMinY();
+        String[] textArray = viewPort.getTextArrayY();
+        int count = textArray != null ? textArray.length : 0;
 
         int maxWidth = 0;
-        for (int i = 0; i <= count; i++) {
-            String text = String.format(Locale.CHINESE,"%.2f",(i * stepY + minY));
+        for (int i = 0; i < count; i++) {
+            String text = textArray[i];
             textRect.setEmpty();
             textPaint.getTextBounds(text, 0, text.length(), textRect);
 
@@ -106,28 +109,20 @@ public class GraphViewY extends View {
         if (viewPort != null) {
             //画y轴上刻度
             int spacingY = viewPort.getSpacingY();
-            int count = viewPort.getyCount();
-            float stepY = viewPort.getStepY();
-            float minY = viewPort.getMinY();
-
-            for (int i = 0; i <= count; i++) {
-                String text = String.format(Locale.CHINESE,"%.2f",(i * stepY + minY));
+            String[] textArray = viewPort.getTextArrayY();
+            if (textArray == null) {
+                return;
+            }
+            int length = textArray.length;
+            for (int i = 1; i < length; i++) {
+                String text = textArray[i];
                 textRect.setEmpty();
                 textPaint.getTextBounds(text, 0, text.length(), textRect);
                 int textHeight = textRect.height();
 
                 int x = (getWidth() - textRect.width()) / 2;
-                int y;
-                if (i == 0) {
-                    y = getHeight();
-
-                } else if (i == count) {
-                    y = getHeight() - spacingY * i + textHeight;
-                } else {
-                    y = getHeight() - spacingY * i + textHeight / 2;
-                }
-
-                canvas.drawText(text, x, y - coordinateTextHeight, textPaint);
+                int y = getHeight() - spacingY * i + textHeight / 2;
+                canvas.drawText(text, x, y, textPaint);
             }
 
             int lineLeft = (int) (getWidth() - linePaint.getStrokeWidth());

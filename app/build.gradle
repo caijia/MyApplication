@@ -1,7 +1,7 @@
 apply plugin: 'com.android.application'
 
 android {
-    compileSdkVersion 23
+    compileSdkVersion 25
     buildToolsVersion "25.0.2"
     useLibrary("org.apache.http.legacy")  //api 23 加入httpClient
     defaultConfig {
@@ -25,9 +25,9 @@ dependencies {
     androidTestCompile('com.android.support.test.espresso:espresso-core:2.2.2', {
         exclude group: 'com.android.support', module: 'support-annotations'
     })
-    compile 'com.android.support:design:23.4.0'
+    compile 'com.android.support:design:25.1.0'
     testCompile 'junit:junit:4.12'
-    compile 'com.android.support:percent:22.2.0'
+    compile 'com.android.support:percent:25.1.0'
     compile 'com.squareup.okhttp3:okhttp:3.5.0'
     compile 'com.google.code.gson:gson:2.8.0'
     compile 'com.loopj.android:android-async-http:1.4.9'

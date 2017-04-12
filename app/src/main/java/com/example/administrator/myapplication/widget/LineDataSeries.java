@@ -1,5 +1,7 @@
 package com.example.administrator.myapplication.widget;
 
+import android.support.annotation.NonNull;
+
 import java.util.ArrayList;
 import java.util.List;
 
@@ -13,7 +15,7 @@ public class LineDataSeries {
     /**
      * 线上面的点集合
      */
-    private List<DataPoint> lineSeries;
+    private List<LineDataPoint> lineSeries;
 
     /**
      * 线条的颜色
@@ -29,18 +31,27 @@ public class LineDataSeries {
         lineSeries = new ArrayList<>();
     }
 
+    public LineDataSeries(int color, int width) {
+        this.color = color;
+        this.width = width;
+        lineSeries = new ArrayList<>();
+    }
+
     public void addDataPoint(DataPoint dataPoint) {
         if (dataPoint == null) {
             return;
         }
-        lineSeries.add(dataPoint);
+        LineDataPoint lineDataPoint = new LineDataPoint(dataPoint);
+        lineSeries.add(lineDataPoint);
     }
 
     public void addDataPointList(List<DataPoint> list) {
         if (list == null || list.isEmpty()) {
             return;
         }
-        lineSeries.addAll(list);
+        for (DataPoint dataPoint : list) {
+            addDataPoint(dataPoint);
+        }
     }
 
     public int getColor() {
@@ -59,11 +70,31 @@ public class LineDataSeries {
         this.width = width;
     }
 
-    public List<DataPoint> getLineSeries() {
+    public List<LineDataPoint> getLineSeries() {
         return lineSeries;
     }
 
-    public void setLineSeries(List<DataPoint> lineSeries) {
-        this.lineSeries = lineSeries;
+    public static class LineDataPoint implements DataPoint,Comparable<LineDataPoint>{
+
+        private DataPoint dataPoint;
+
+        public LineDataPoint(DataPoint dataPoint) {
+            this.dataPoint = dataPoint;
+        }
+
+        @Override
+        public float getX() {
+            return dataPoint.getX();
+        }
+
+        @Override
+        public float getY() {
+            return dataPoint.getY();
+        }
+
+        @Override
+        public int compareTo(@NonNull LineDataPoint another) {
+            return ((Float)getX()).compareTo(another.getX());
+        }
     }
 }

@@ -21,42 +21,38 @@ public class GraphActivity extends AppCompatActivity implements GraphView.OnGrap
 
     private GraphView graphView;
 
+    private float getX() {
+        return (float) (Math.random() * 12 + 1);
+    }
+
     @Override
     protected void onCreate(@Nullable Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_graph);
 
-         graphView = (GraphView) findViewById(R.id.graph_view);
+        graphView = (GraphView) findViewById(R.id.graph_view);
 
         LineDataSeries lineDataSeries = new LineDataSeries();
-        lineDataSeries.addDataPoint(getLineDataPoint(1, 1));
-        lineDataSeries.addDataPoint(getLineDataPoint(2, 2));
-        lineDataSeries.addDataPoint(getLineDataPoint(3, 3));
-        lineDataSeries.addDataPoint(getLineDataPoint(4, 4));
-        lineDataSeries.addDataPoint(getLineDataPoint(5, 5));
-        lineDataSeries.addDataPoint(getLineDataPoint(12, 4));
+        lineDataSeries.addDataPoint(getLineDataPoint(getX(), 1));
+        lineDataSeries.addDataPoint(getLineDataPoint(getX(), 2));
+        lineDataSeries.addDataPoint(getLineDataPoint(getX(), 3));
+        lineDataSeries.addDataPoint(getLineDataPoint(getX(), 4));
+        lineDataSeries.addDataPoint(getLineDataPoint(getX(), 1f));
+        lineDataSeries.addDataPoint(getLineDataPoint(getX(), 2f));
+        lineDataSeries.addDataPoint(getLineDataPoint(getX(), 3f));
+        lineDataSeries.addDataPoint(getLineDataPoint(getX(), 4f));
+        lineDataSeries.addDataPoint(getLineDataPoint(getX(), 4.2f));
         lineDataSeries.setWidth(3);
         lineDataSeries.setColor(Color.BLUE);
         graphView.addLineSeries(lineDataSeries);
 
-        LineDataSeries lineDataSeries1 = new LineDataSeries();
-        lineDataSeries1.addDataPoint(getLineDataPoint(1, 2.3f));
-        lineDataSeries1.addDataPoint(getLineDataPoint(2, 3.2f));
-        lineDataSeries1.addDataPoint(getLineDataPoint(3, 4.3f));
-        lineDataSeries1.addDataPoint(getLineDataPoint(4, 5.2f));
-        lineDataSeries1.addDataPoint(getLineDataPoint(5, 6.1f));
-        lineDataSeries1.addDataPoint(getLineDataPoint(11, 5));
-        lineDataSeries1.setWidth(3);
-        lineDataSeries1.setColor(Color.RED);
-        graphView.addLineSeries(lineDataSeries1);
 
         RectDataSeries rectDataSeries = new RectDataSeries(Color.DKGRAY,0.1f);
         rectDataSeries.addDataPoint(getLineDataPoint(1, 1.5f));
         rectDataSeries.addDataPoint(getLineDataPoint(2, 2.9f));
         rectDataSeries.addDataPoint(getLineDataPoint(3, 3.4f));
-        rectDataSeries.addDataPoint(getLineDataPoint(4, 4.9f));
-        rectDataSeries.addDataPoint(getLineDataPoint(5, 5.2f));
-        rectDataSeries.addDataPoint(getLineDataPoint(12, 4));
+        rectDataSeries.addDataPoint(getLineDataPoint(4, 4.3f));
+        rectDataSeries.addDataPoint(getLineDataPoint(5, 3.2f));
 //        graphView.addRectSeries(rectDataSeries);
 
         RectDataSeries rectDataSeries1 = new RectDataSeries(Color.GRAY,0.1f);
@@ -65,13 +61,15 @@ public class GraphActivity extends AppCompatActivity implements GraphView.OnGrap
         rectDataSeries1.addDataPoint(getLineDataPoint(3, 2.4f));
         rectDataSeries1.addDataPoint(getLineDataPoint(4, 3.9f));
         rectDataSeries1.addDataPoint(getLineDataPoint(5, 2.2f));
-        rectDataSeries1.addDataPoint(getLineDataPoint(12, 4));
 //        graphView.addRectSeries(rectDataSeries1);
-        ViewPort viewPort = new ViewPort(
-                0, 20, 56 * 3, 12  //x
-                , 0.6f, 1f, 20 * 3, 8);
-        viewPort.setxTextArray(new String[]{"14:00","14:00","14:00","14:00","14:00","14:00",
-                "14:00","14:00","14:00","14:00","14:00","14:00","14:00"});
+        ViewPort viewPort = new ViewPort();
+        viewPort.setTextArrayY(new String[]{"0","0.25","0.50","0.75","1.00"});
+
+        viewPort.setTextArrayX(new String[]{"0","14:00","14:15","14:30","14:45","15:00",
+                "15:15","15:30","15:45","16:00","16:15","16:30","16:45"});
+
+        viewPort.setSpacingY(50*3);
+        viewPort.setSpacingX(40*3);
         graphView.setViewPort(viewPort);//y
 
         graphView.addRectSeries(rectDataSeries);
@@ -87,7 +85,6 @@ public class GraphActivity extends AppCompatActivity implements GraphView.OnGrap
         rectDataSeries1.addDataPoint(getLineDataPoint(3, 2.4f));
         rectDataSeries1.addDataPoint(getLineDataPoint(4, 3.9f));
         rectDataSeries1.addDataPoint(getLineDataPoint(5, 2.2f));
-        rectDataSeries1.addDataPoint(getLineDataPoint(10, 4));
         graphView.addRectSeries(rectDataSeries1);
     }
 
@@ -122,15 +119,6 @@ public class GraphActivity extends AppCompatActivity implements GraphView.OnGrap
             return y;
         }
 
-        @Override
-        public void setX(float x) {
-            this.x = x;
-        }
-
-        @Override
-        public void setY(float y) {
-            this.y = y;
-        }
     }
 
 }

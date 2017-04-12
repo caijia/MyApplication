@@ -10,8 +10,5 @@ public interface DataPoint {
 
     float getY();
 
-    void setX(float x);
-
-    void setY(float y);
 
 }

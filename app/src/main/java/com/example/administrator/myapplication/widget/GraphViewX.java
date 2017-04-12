@@ -15,14 +15,10 @@ import android.util.TypedValue;
 import android.view.MotionEvent;
 import android.view.View;
 
-import com.example.administrator.myapplication.widget.RectDataSeries.RectDataPoint;
-
 import java.util.ArrayList;
 import java.util.Collections;
-import java.util.Comparator;
 import java.util.List;
 
-import static android.R.attr.width;
 import static android.graphics.Paint.Style.FILL;
 import static android.graphics.Paint.Style.STROKE;
 
@@ -35,7 +31,6 @@ public class GraphViewX extends View {
     private ViewPort viewPort;
     private Paint paint;
     private Rect textRect;
-    private int coordinateTextHeight;
     private Path linePath = new Path();
     private List<LineDataSeries> lineSeriesList;
 
@@ -44,7 +39,7 @@ public class GraphViewX extends View {
     /**
      * 保存所有x轴相等的点的集合
      */
-    private ArrayMap<Float, List<RectDataPoint>> rectSeriesMap;
+    private ArrayMap<Float, List<RectDataSeries.RectDataPoint>> rectSeriesMap;
     private List<RectDataSeries> rectSeriesList;
     private DataPoint minDistanceItem;
 
@@ -74,7 +69,6 @@ public class GraphViewX extends View {
         lineAttribute = new PaintAttribute(Color.parseColor("#bbbbbb"), dpToPx(0.5f), STROKE, 0);
 
         textRect = new Rect();
-        coordinateTextHeight = 40;
 
         lineSeriesList = new ArrayList<>();
         rectSeriesList = new ArrayList<>();
@@ -95,16 +89,49 @@ public class GraphViewX extends View {
         this.viewPort = viewPort;
     }
 
+    private int getCountY(){
+        String[] textArray = viewPort.getTextArrayY();
+        return textArray != null ? textArray.length : 0;
+    }
+
+    private int getCountX(){
+        String[] textArray = viewPort.getTextArrayX();
+        return textArray != null ? textArray.length : 0;
+    }
+
     @Override
     protected void onMeasure(int widthMeasureSpec, int heightMeasureSpec) {
         super.onMeasure(widthMeasureSpec, heightMeasureSpec);
         if (viewPort != null) {
-            int width = viewPort.getxCount() * viewPort.getSpacingX();
-            int height = viewPort.getyCount() * viewPort.getSpacingY() + coordinateTextHeight;
+            bottomTextHeight = computeHeight();
+            int countX = getCountX();
+            int countY = getCountY();
+            int width = countX * viewPort.getSpacingX();
+            int height = countY * viewPort.getSpacingY() + bottomTextHeight;
             setMeasuredDimension(
                     resolveSize(0, MeasureSpec.makeMeasureSpec(width, MeasureSpec.EXACTLY)),
                     resolveSize(0, MeasureSpec.makeMeasureSpec(height, MeasureSpec.EXACTLY)));
         }
+    }
+
+    private int bottomTextHeight;
+
+    private int computeHeight() {
+        String[] textArray = viewPort.getTextArrayY();
+        int count = textArray != null ? textArray.length : 0;
+
+        setPaintAttribute(textAttribute);
+        int maxHeight = 0;
+        for (int i = 0; i < count; i++) {
+            String text = textArray[i];
+            textRect.setEmpty();
+            paint.getTextBounds(text, 0, text.length(), textRect);
+
+            if (maxHeight < textRect.height()) {
+                maxHeight = textRect.height();
+            }
+        }
+        return (int) (maxHeight + dpToPx(4));
     }
 
     @Override
@@ -114,19 +141,19 @@ public class GraphViewX extends View {
         }
 
         if (event.getActionMasked() == MotionEvent.ACTION_UP) {
+            int countY = getCountY();
+
             //遍历线上的点,找到与点击最近的点
             if (lineSeriesList == null || lineSeriesList.isEmpty()) {
                 return super.onTouchEvent(event);
             }
 
-//            int offsetX = ((ViewGroup) getParent()).getScrollX();
-//            float x = event.getX() + offsetX;
             float x = event.getX();
             float y = event.getY();
 
             double totalMinDistance = Double.MAX_VALUE;
             for (LineDataSeries lineSeries : lineSeriesList) {
-                List<DataPoint> pointList = lineSeries.getLineSeries();
+                List<LineDataSeries.LineDataPoint> pointList = lineSeries.getLineSeries();
                 if (pointList == null || pointList.isEmpty()) {
                     continue;
                 }
@@ -136,7 +163,7 @@ public class GraphViewX extends View {
                 int index = 0;
                 for (DataPoint point : pointList) {
                     float pointY = point.getY();
-                    float actualY = viewPort.getyCount() - pointY;
+                    float actualY = countY - pointY;
                     float xDistance = point.getX() * viewPort.getSpacingX();
                     float yDistance = actualY * viewPort.getSpacingY();
 
@@ -190,37 +217,25 @@ public class GraphViewX extends View {
      */
     private void drawAxisXText(Canvas canvas) {
         int height = getHeight();
-        if (coordinateTextHeight != 0) {
-            float xCount = viewPort.getxCount();
-            int spacingX = viewPort.getSpacingX();
-            String[] textArray = viewPort.getxTextArray();
-            boolean hasText = textArray != null && textArray.length == xCount + 1;
-            for (int i = 0; i <= xCount; i++) {
-                textRect.setEmpty();
-                String text = hasText ? textArray[i] : String.valueOf(i);
-                setPaintAttribute(textAttribute);
-                paint.getTextBounds(text, 0, text.length(), textRect);
-                int textWidth = textRect.width();
+        float xCount = getCountX();
+        int spacingX = viewPort.getSpacingX();
+        String[] textArray = viewPort.getTextArrayX();
+        for (int i = 1; i < xCount; i++) {
+            textRect.setEmpty();
+            String text = textArray[i];
+            setPaintAttribute(textAttribute);
+            paint.getTextBounds(text, 0, text.length(), textRect);
+            int textWidth = textRect.width();
 
-                int left;
-                if (i == 0) {
-                    left = 0;
-
-                } else if (i == xCount) {
-                    left = spacingX * i - textWidth - Math.round(dpToPx(1f));
-
-                } else {
-                    left = spacingX * i - textWidth / 2;
-                }
-                setPaintAttribute(textAttribute);
-                canvas.drawText(text, left, height, paint);
-            }
+            int left = spacingX * i - textWidth / 2;
+            setPaintAttribute(textAttribute);
+            canvas.drawText(text, left, height, paint);
         }
     }
 
     private void drawVerticalLine(Canvas canvas) {
         int height = getHeight();
-        float xCount = viewPort.getxCount();
+        float xCount = getCountX();
         int spacingX = viewPort.getSpacingX();
         for (int i = 0; i <= xCount; i++) {
             setPaintAttribute(lineAttribute);
@@ -238,13 +253,13 @@ public class GraphViewX extends View {
             //画竖线
             if (i > 0) {
                 setPaintAttribute(lineAttribute);
-                canvas.drawLine(lineLeft, 0, lineLeft, height - coordinateTextHeight, paint);
+                canvas.drawLine(lineLeft, 0, lineLeft, height - bottomTextHeight, paint);
             }
         }
     }
 
     private void drawHorizontalLine(Canvas canvas) {
-        float yCount = viewPort.getyCount();
+        float yCount = getCountY();
         int spacingY = viewPort.getSpacingY();
         setPaintAttribute(lineAttribute);
         for (int i = 0; i <= yCount; i++) {
@@ -259,7 +274,7 @@ public class GraphViewX extends View {
                 lineBottom = spacingY * i;
             }
 
-            canvas.drawLine(0, lineBottom, width, lineBottom, paint);
+            canvas.drawLine(0, lineBottom, getWidth(), lineBottom, paint);
         }
     }
 
@@ -270,14 +285,15 @@ public class GraphViewX extends View {
      */
     private void drawLineSeries(Canvas canvas) {
         if (lineSeriesList != null && !lineSeriesList.isEmpty()) {
+            int countY = getCountY();
             for (LineDataSeries lineDataSeries : lineSeriesList) {
                 linePath.reset();
                 //画数据线
-                List<DataPoint> lineSeries = lineDataSeries.getLineSeries();
+                List<LineDataSeries.LineDataPoint> lineSeries = lineDataSeries.getLineSeries();
                 int index = 0;
                 for (DataPoint linePoint : lineSeries) {
                     float y = linePoint.getY();
-                    float actualY = viewPort.getyCount() - y;
+                    float actualY = countY - y;
 
                     float xDistance = linePoint.getX() * viewPort.getSpacingX();
                     float yDistance = actualY * viewPort.getSpacingY();
@@ -314,10 +330,10 @@ public class GraphViewX extends View {
         if (rectSeriesList != null && !rectSeriesList.isEmpty()) {
             for (RectDataSeries rectDataSeries : rectSeriesList) {
                 //画数据线
-                List<RectDataPoint> pointList = rectDataSeries.getRectSeries();
-                for (RectDataPoint point : pointList) {
+                List<RectDataSeries.RectDataPoint> pointList = rectDataSeries.getRectSeries();
+                for (RectDataSeries.RectDataPoint point : pointList) {
                     float x = point.getX();
-                    List<RectDataPoint> dataPoints = rectSeriesMap.get(x);
+                    List<RectDataSeries.RectDataPoint> dataPoints = rectSeriesMap.get(x);
                     if (dataPoints == null) {
                         dataPoints = new ArrayList<>();
                         rectSeriesMap.put(x, dataPoints);
@@ -332,11 +348,11 @@ public class GraphViewX extends View {
             int size = rectSeriesMap.size();
             for (int i = 0; i < size; i++) {
                 Float x = rectSeriesMap.keyAt(i);
-                List<RectDataPoint> pointList = rectSeriesMap.valueAt(i);
+                List<RectDataSeries.RectDataPoint> pointList = rectSeriesMap.valueAt(i);
                 if (pointList != null && !pointList.isEmpty()) {
                     int index = 0;
                     int pointSize = pointList.size();
-                    for (RectDataPoint point : pointList) {
+                    for (RectDataSeries.RectDataPoint point : pointList) {
                         float rectWidth = point.getWidthPercent();
                         float changedX = x - pointSize * rectWidth * 0.5f + index * rectWidth;
                         drawRect(canvas, point, changedX);
@@ -348,32 +364,20 @@ public class GraphViewX extends View {
         }
     }
 
-    private void drawRect(Canvas canvas, RectDataPoint point, float changedX) {
+    private void drawRect(Canvas canvas, RectDataSeries.RectDataPoint point, float changedX) {
         float y = point.getY();
         final float x = changedX;
-        float actualY = viewPort.getyCount() - y;
+        int countY = getCountY();
+        float actualY = countY - y;
 
         float left = x * viewPort.getSpacingX();
         float top = actualY * viewPort.getSpacingY();
         float right = viewPort.getSpacingX() * point.getWidthPercent() + left;
-        float bottom = getHeight() - coordinateTextHeight;
+        float bottom = getHeight() - bottomTextHeight;
 
         paint.setColor(point.getColor());
         paint.setStyle(FILL);
         canvas.drawRect(left, top, right, bottom, paint);
-    }
-
-    /**
-     * 获取当前画笔的属性
-     *
-     * @return
-     */
-    private PaintAttribute getPaintAttribute() {
-        int color = paint.getColor();
-        float strokeWidth = paint.getStrokeWidth();
-        Paint.Style style = paint.getStyle();
-        float textSize = paint.getTextSize();
-        return new PaintAttribute(color, strokeWidth, style, textSize);
     }
 
     private void setPaintAttribute(PaintAttribute attribute) {
@@ -395,16 +399,16 @@ public class GraphViewX extends View {
         if (lineSeries == null) {
             return;
         }
-        List<DataPoint> dataPointList = lineSeries.getLineSeries();
-        Collections.sort(dataPointList, new Comparator<DataPoint>() {
-            @Override
-            public int compare(DataPoint lhs, DataPoint rhs) {
-                return (int) (lhs.getX() - rhs.getX());
-            }
-        });
+        List<LineDataSeries.LineDataPoint> dataPointList = lineSeries.getLineSeries();
+        Collections.sort(dataPointList);
+
+        for (LineDataSeries.LineDataPoint lineDataPoint : dataPointList) {
+            System.out.println("x="+lineDataPoint.getX());
+        }
         this.lineSeriesList.add(lineSeries);
         invalidate();
     }
+
 
     public void addRectSeries(RectDataSeries rectDataSeries) {
         if (rectDataSeries == null) {

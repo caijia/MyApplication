@@ -64,11 +64,7 @@
         </activity>
 
         <activity android:name=".GraphActivity">
-            <intent-filter>
-                <action android:name="android.intent.action.MAIN" />
 
-                <category android:name="android.intent.category.LAUNCHER" />
-            </intent-filter>
 
         </activity>
 
@@ -78,6 +74,14 @@
 
         <activity android:name=".scroller.TestScrollerActivity">
 
+        </activity>
+
+        <activity android:name=".recyclerview.MyRecyclerViewActivity">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+
+                <category android:name="android.intent.category.LAUNCHER" />
+            </intent-filter>
         </activity>
 
     </application>
