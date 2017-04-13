@@ -77,6 +77,10 @@
         </activity>
 
         <activity android:name=".recyclerview.MyRecyclerViewActivity">
+
+        </activity>
+
+        <activity android:name=".viewpager.ViewPagerActivity">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
 
