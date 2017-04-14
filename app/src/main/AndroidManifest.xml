@@ -81,6 +81,10 @@
         </activity>
 
         <activity android:name=".viewpager.ViewPagerActivity">
+
+        </activity>
+
+        <activity android:name=".rx.RxDemoActivity">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
 
