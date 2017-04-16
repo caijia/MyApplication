@@ -6,7 +6,6 @@ import android.support.design.widget.TabLayout;
 import android.support.v4.app.Fragment;
 import android.support.v4.app.FragmentManager;
 import android.support.v4.app.FragmentStatePagerAdapter;
-import android.support.v4.view.ViewPager;
 import android.support.v7.app.AppCompatActivity;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -14,7 +13,7 @@ import android.view.ViewGroup;
 import android.widget.TextView;
 
 import com.example.administrator.myapplication.R;
-import com.example.administrator.myapplication.scroller.ViewPagerScroller;
+import com.example.administrator.myapplication.scroller.autoviewpager.AutoScrollViewPager;
 import com.example.administrator.myapplication.widget.CircleIndicator;
 
 import java.util.ArrayList;
@@ -26,7 +25,7 @@ import java.util.List;
 
 public class ViewPagerActivity extends AppCompatActivity {
 
-    private ViewPager viewPager;
+    private AutoScrollViewPager viewPager;
     private TabLayout tabLayout;
     private MyPagerAdapter pagerAdapter;
     private CircleIndicator circleIndicator;
@@ -36,7 +35,7 @@ public class ViewPagerActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_viewpager);
 
-        viewPager = (ViewPager) findViewById(R.id.viewpager);
+        viewPager = (AutoScrollViewPager) findViewById(R.id.viewpager);
         tabLayout = (TabLayout) findViewById(R.id.tab_layout);
         circleIndicator = (CircleIndicator) findViewById(R.id.circle_indicator);
 
@@ -48,10 +47,7 @@ public class ViewPagerActivity extends AppCompatActivity {
         viewPager.setAdapter(pagerAdapter);
         tabLayout.setupWithViewPager(viewPager);
         circleIndicator.setViewPager(viewPager);
-
-        ViewPagerScroller pagerScroller = new ViewPagerScroller(this);
-        pagerScroller.setScrollDuration(2000);//设置时间，时间越长，速度越慢
-        pagerScroller.initViewPagerScroll(viewPager);
+        viewPager.startAutoScroll();
     }
 
     public void addItem(View view) {

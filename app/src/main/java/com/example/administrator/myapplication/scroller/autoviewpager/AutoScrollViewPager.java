@@ -15,18 +15,15 @@ import java.lang.reflect.Field;
 
 /**
  * Auto Scroll View Pager
+ *
  * @author <a href="http://www.trinea.cn" target="_blank">Trinea</a>
  */
-public class AutoScrollViewPager extends ViewPager {
+public class AutoScrollViewPager extends ViewPager{
 
     public static final int DEFAULT_INTERVAL = 1500;
-    public static final int LEFT = 0;
-    public static final int RIGHT = 1;
     public static final int SCROLL_WHAT = 0;
 
     private long interval = DEFAULT_INTERVAL;
-    private int direction = RIGHT;
-    private boolean isCycle = true;
     private Handler handler;
     private CustomDurationScroller scroller = null;
 
@@ -43,10 +40,37 @@ public class AutoScrollViewPager extends ViewPager {
     private void init() {
         handler = new AutoScrollHandler(this);
         setViewPagerScroller();
+        scroller.setScrollDurationFactor(scrollFactor);
+        addOnPageChangeListener(pageChangeListener);
     }
 
+    private class CheckPageChangeListener extends SimpleOnPageChangeListener{
+
+        @Override
+        public void onPageScrollStateChanged(int state) {
+            if (state == SCROLL_STATE_IDLE && motionEventUpOrCancel) {
+                motionEventUpOrCancel = false;
+                scroller.setScrollDurationFactor(scrollFactor);
+                startAutoScroll();
+            }
+        }
+
+        @Override
+        public void onPageScrolled(int position, float positionOffset, int positionOffsetPixels) {
+            this.positionOffsetPixels = positionOffsetPixels;
+        }
+
+        private int positionOffsetPixels;
+
+        public boolean isPageScroll(){
+            return positionOffsetPixels > 0;
+        }
+
+    }
+
+    private CheckPageChangeListener pageChangeListener = new CheckPageChangeListener();
+
     public void startAutoScroll() {
-        stopAutoScroll();
         sendScrollMessage(interval);
     }
 
@@ -89,19 +113,17 @@ public class AutoScrollViewPager extends ViewPager {
             return;
         }
 
-        int nextItem = (direction == LEFT) ? --currentItem : ++currentItem;
+        int nextItem = ++currentItem;
         if (nextItem < 0) {
-            if (isCycle) {
-                setCurrentItem(totalCount - 1, false);
-            }
+            setCurrentItem(totalCount - 1, false);
         } else if (nextItem == totalCount) {
-            if (isCycle) {
-                setCurrentItem(0, false);
-            }
+            setCurrentItem(0, false);
         } else {
             setCurrentItem(nextItem, true);
         }
     }
+
+    private boolean motionEventUpOrCancel;
 
     @Override
     public boolean dispatchTouchEvent(MotionEvent ev) {
@@ -113,7 +135,14 @@ public class AutoScrollViewPager extends ViewPager {
 
             case MotionEvent.ACTION_UP:
             case MotionEvent.ACTION_CANCEL: {
-                startAutoScroll();
+                if (pageChangeListener.isPageScroll()) {
+                    motionEventUpOrCancel = true;
+                    scroller.setScrollDurationFactor(1);
+
+                }else{
+                    scroller.setScrollDurationFactor(scrollFactor);
+                    startAutoScroll();
+                }
                 break;
             }
         }
@@ -128,52 +157,39 @@ public class AutoScrollViewPager extends ViewPager {
         this.interval = interval;
     }
 
-    /**
-     * set auto scroll direction
-     *
-     * @param direction {@link #LEFT} or {@link #RIGHT}, default is {@link #RIGHT}
-     */
-    public void setDirection(int direction) {
-        this.direction = direction;
-    }
-
-    /**
-     * set whether automatic cycle when auto scroll reaching the last or first item, default is true
-     *
-     * @param isCycle the isCycle to set
-     */
-    public void setCycle(boolean isCycle) {
-        this.isCycle = isCycle;
-    }
-
-    @Override
-    public boolean isFocused() {
-        return true;
-    }
-
-    public static class AutoScrollHandler extends Handler {
+    private static class AutoScrollHandler extends Handler {
 
         private WeakReference<AutoScrollViewPager> ref;
 
-        public AutoScrollHandler(AutoScrollViewPager viewPager) {
+        AutoScrollHandler(AutoScrollViewPager viewPager) {
             ref = new WeakReference<>(viewPager);
         }
 
         @Override
         public void handleMessage(Message msg) {
             switch (msg.what) {
-                case SCROLL_WHAT:
+                case SCROLL_WHAT: {
                     if (ref != null && ref.get() != null) {
-                        ref.get().scrollOnce();
-                        ref.get().sendScrollMessage(ref.get().getInterval());
+                        AutoScrollViewPager viewPager = ref.get();
+                        viewPager.scrollOnce();
+                        viewPager.sendScrollMessage(viewPager.getInterval());
                     }
-                default:
-                    break;
+                }
             }
         }
     }
 
-    public static class CustomDurationScroller extends Scroller {
+    private int scrollFactor = 5;
+
+    public void setScrollFactor(int scrollFactor) {
+        this.scrollFactor = scrollFactor;
+    }
+
+    public int getScrollFactor() {
+        return scrollFactor;
+    }
+
+    private static class CustomDurationScroller extends Scroller {
 
         private double scrollFactor = 1;
 
@@ -181,11 +197,11 @@ public class AutoScrollViewPager extends ViewPager {
             super(context);
         }
 
-        public CustomDurationScroller(Context context, Interpolator interpolator) {
+        CustomDurationScroller(Context context, Interpolator interpolator) {
             super(context, interpolator);
         }
 
-        public void setScrollDurationFactor(double scrollFactor) {
+        void setScrollDurationFactor(double scrollFactor) {
             this.scrollFactor = scrollFactor;
         }
 
