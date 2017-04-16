@@ -22,4 +22,12 @@
         <attr name="complete_delay_duration" format="integer" />
         <attr name="refreshing_pin_header" format="boolean" />
     </declare-styleable>
+
+    <declare-styleable name="CircleIndicator">
+        <attr name="radius" format="dimension" />
+        <attr name="selectedColor" format="color" />
+        <attr name="normalColor" format="color" />
+        <attr name="space" format="dimension" />
+        <attr name="smoothScroll" format="boolean" />
+    </declare-styleable>
 </resources>

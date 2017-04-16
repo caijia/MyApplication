@@ -14,6 +14,8 @@ import android.view.ViewGroup;
 import android.widget.TextView;
 
 import com.example.administrator.myapplication.R;
+import com.example.administrator.myapplication.scroller.ViewPagerScroller;
+import com.example.administrator.myapplication.widget.CircleIndicator;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -27,6 +29,7 @@ public class ViewPagerActivity extends AppCompatActivity {
     private ViewPager viewPager;
     private TabLayout tabLayout;
     private MyPagerAdapter pagerAdapter;
+    private CircleIndicator circleIndicator;
 
     @Override
     protected void onCreate(@Nullable Bundle savedInstanceState) {
@@ -35,6 +38,7 @@ public class ViewPagerActivity extends AppCompatActivity {
 
         viewPager = (ViewPager) findViewById(R.id.viewpager);
         tabLayout = (TabLayout) findViewById(R.id.tab_layout);
+        circleIndicator = (CircleIndicator) findViewById(R.id.circle_indicator);
 
         pagerAdapter = new MyPagerAdapter(getSupportFragmentManager());
         for (int i = 0; i < 4; i++) {
@@ -43,10 +47,15 @@ public class ViewPagerActivity extends AppCompatActivity {
 
         viewPager.setAdapter(pagerAdapter);
         tabLayout.setupWithViewPager(viewPager);
+        circleIndicator.setViewPager(viewPager);
+
+        ViewPagerScroller pagerScroller = new ViewPagerScroller(this);
+        pagerScroller.setScrollDuration(2000);//设置时间，时间越长，速度越慢
+        pagerScroller.initViewPagerScroll(viewPager);
     }
 
     public void addItem(View view) {
-        pagerAdapter.addItem(0,TestFragment.getInstance(pagerAdapter.getCount()));
+        pagerAdapter.addItem(0, TestFragment.getInstance(pagerAdapter.getCount()));
         pagerAdapter.notifyDataSetChanged();
     }
 
@@ -56,56 +65,21 @@ public class ViewPagerActivity extends AppCompatActivity {
     }
 
     public void updateItem(View view) {
-
-    }
-
-    private class MyPagerAdapter extends FragmentStatePagerAdapter{
-
-        List<Fragment> fragments;
-
-        public void addItem(int index,Fragment fragment) {
-            if (index < 0 || index >= fragments.size()) {
-                addItem(fragment);
-            }
-            fragments.add(index,fragment);
-        }
-
-        public void remove(int i) {
-            fragments.remove(i);
-        }
-
-        public void addItem(Fragment fragment) {
-            fragments.add(fragment);
-        }
-
-        public MyPagerAdapter(FragmentManager fm) {
-            super(fm);
-            fragments = new ArrayList<>();
-        }
-
-        @Override
-        public Fragment getItem(int position) {
-            return fragments.get(position);
-        }
-
-        @Override
-        public int getCount() {
-            return fragments.size();
-        }
-
-        @Override
-        public CharSequence getPageTitle(int position) {
-            return "Item=" + position;
-        }
-
-        @Override
-        public int getItemPosition(Object object) {
-            return POSITION_NONE;
+        int currentItem = viewPager.getCurrentItem();
+        int count = viewPager.getAdapter().getCount();
+        ++currentItem;
+        if (currentItem >= count) {
+            currentItem = 0;
+            viewPager.setCurrentItem(currentItem, false);
+        } else if (currentItem < 0) {
+            currentItem = count - 1;
+            viewPager.setCurrentItem(currentItem, false);
+        } else {
+            viewPager.setCurrentItem(currentItem, true);
         }
     }
 
-
-    public static class TestFragment extends Fragment{
+    public static class TestFragment extends Fragment {
 
         static final String POSITION_EXTRA = "position:id";
 
@@ -114,7 +88,7 @@ public class ViewPagerActivity extends AppCompatActivity {
         public static TestFragment getInstance(int position) {
             TestFragment f = new TestFragment();
             Bundle args = new Bundle();
-            args.putInt(POSITION_EXTRA,position);
+            args.putInt(POSITION_EXTRA, position);
             f.setArguments(args);
             return f;
         }
@@ -139,6 +113,51 @@ public class ViewPagerActivity extends AppCompatActivity {
         public void onSaveInstanceState(Bundle outState) {
             super.onSaveInstanceState(outState);
             outState.putString("args", "Item=" + position);
+        }
+    }
+
+    private class MyPagerAdapter extends FragmentStatePagerAdapter {
+
+        List<Fragment> fragments;
+
+        public MyPagerAdapter(FragmentManager fm) {
+            super(fm);
+            fragments = new ArrayList<>();
+        }
+
+        public void addItem(int index, Fragment fragment) {
+            if (index < 0 || index >= fragments.size()) {
+                addItem(fragment);
+            }
+            fragments.add(index, fragment);
+        }
+
+        public void remove(int i) {
+            fragments.remove(i);
+        }
+
+        public void addItem(Fragment fragment) {
+            fragments.add(fragment);
+        }
+
+        @Override
+        public Fragment getItem(int position) {
+            return fragments.get(position);
+        }
+
+        @Override
+        public int getCount() {
+            return fragments.size();
+        }
+
+        @Override
+        public CharSequence getPageTitle(int position) {
+            return "Item=" + position;
+        }
+
+        @Override
+        public int getItemPosition(Object object) {
+            return POSITION_NONE;
         }
     }
 }

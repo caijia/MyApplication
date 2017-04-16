@@ -65,12 +65,12 @@ public class RxDemoActivity extends AppCompatActivity {
                 .subscribe(new FlowableSubscriber<Result>() {
                     @Override
                     public void onSubscribe(@NonNull Subscription s) {
-
+                        s.request(1);
                     }
 
                     @Override
                     public void onNext(Result result) {
-
+                        textView.setText(result.toString());
                     }
 
                     @Override

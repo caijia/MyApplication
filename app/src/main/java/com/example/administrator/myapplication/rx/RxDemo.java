@@ -124,7 +124,8 @@ public class RxDemo {
                     public void accept(@NonNull String s) throws Exception {
                         System.out.println(s);
                     }
-                });
+                })
+        .dispose();
     }
 
     private void fun2() {
