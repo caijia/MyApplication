@@ -18,7 +18,7 @@ import java.lang.reflect.Field;
  *
  * @author <a href="http://www.trinea.cn" target="_blank">Trinea</a>
  */
-public class AutoScrollViewPager extends ViewPager{
+public class AutoScrollViewPager extends ViewPager {
 
     public static final int DEFAULT_INTERVAL = 1500;
     public static final int SCROLL_WHAT = 0;
@@ -26,6 +26,9 @@ public class AutoScrollViewPager extends ViewPager{
     private long interval = DEFAULT_INTERVAL;
     private Handler handler;
     private CustomDurationScroller scroller = null;
+    private CheckPageChangeListener pageChangeListener = new CheckPageChangeListener();
+    private boolean motionEventUpOrCancel;
+    private int scrollFactor = 5;
 
     public AutoScrollViewPager(Context paramContext) {
         super(paramContext);
@@ -43,32 +46,6 @@ public class AutoScrollViewPager extends ViewPager{
         scroller.setScrollDurationFactor(scrollFactor);
         addOnPageChangeListener(pageChangeListener);
     }
-
-    private class CheckPageChangeListener extends SimpleOnPageChangeListener{
-
-        @Override
-        public void onPageScrollStateChanged(int state) {
-            if (state == SCROLL_STATE_IDLE && motionEventUpOrCancel) {
-                motionEventUpOrCancel = false;
-                scroller.setScrollDurationFactor(scrollFactor);
-                startAutoScroll();
-            }
-        }
-
-        @Override
-        public void onPageScrolled(int position, float positionOffset, int positionOffsetPixels) {
-            this.positionOffsetPixels = positionOffsetPixels;
-        }
-
-        private int positionOffsetPixels;
-
-        public boolean isPageScroll(){
-            return positionOffsetPixels > 0;
-        }
-
-    }
-
-    private CheckPageChangeListener pageChangeListener = new CheckPageChangeListener();
 
     public void startAutoScroll() {
         sendScrollMessage(interval);
@@ -123,8 +100,6 @@ public class AutoScrollViewPager extends ViewPager{
         }
     }
 
-    private boolean motionEventUpOrCancel;
-
     @Override
     public boolean dispatchTouchEvent(MotionEvent ev) {
         switch (ev.getActionMasked()) {
@@ -139,7 +114,7 @@ public class AutoScrollViewPager extends ViewPager{
                     motionEventUpOrCancel = true;
                     scroller.setScrollDurationFactor(1);
 
-                }else{
+                } else {
                     scroller.setScrollDurationFactor(scrollFactor);
                     startAutoScroll();
                 }
@@ -155,6 +130,14 @@ public class AutoScrollViewPager extends ViewPager{
 
     public void setInterval(long interval) {
         this.interval = interval;
+    }
+
+    public int getScrollFactor() {
+        return scrollFactor;
+    }
+
+    public void setScrollFactor(int scrollFactor) {
+        this.scrollFactor = scrollFactor;
     }
 
     private static class AutoScrollHandler extends Handler {
@@ -179,16 +162,6 @@ public class AutoScrollViewPager extends ViewPager{
         }
     }
 
-    private int scrollFactor = 5;
-
-    public void setScrollFactor(int scrollFactor) {
-        this.scrollFactor = scrollFactor;
-    }
-
-    public int getScrollFactor() {
-        return scrollFactor;
-    }
-
     private static class CustomDurationScroller extends Scroller {
 
         private double scrollFactor = 1;
@@ -209,5 +182,29 @@ public class AutoScrollViewPager extends ViewPager{
         public void startScroll(int startX, int startY, int dx, int dy, int duration) {
             super.startScroll(startX, startY, dx, dy, (int) (duration * scrollFactor));
         }
+    }
+
+    private class CheckPageChangeListener extends SimpleOnPageChangeListener {
+
+        private int positionOffsetPixels;
+
+        @Override
+        public void onPageScrollStateChanged(int state) {
+            if (state == SCROLL_STATE_IDLE && motionEventUpOrCancel) {
+                motionEventUpOrCancel = false;
+                scroller.setScrollDurationFactor(scrollFactor);
+                startAutoScroll();
+            }
+        }
+
+        @Override
+        public void onPageScrolled(int position, float positionOffset, int positionOffsetPixels) {
+            this.positionOffsetPixels = positionOffsetPixels;
+        }
+
+        public boolean isPageScroll() {
+            return positionOffsetPixels > 0;
+        }
+
     }
 }
