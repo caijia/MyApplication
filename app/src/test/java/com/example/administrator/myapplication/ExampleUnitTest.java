@@ -1,8 +1,9 @@
 package com.example.administrator.myapplication;
 
-import com.example.administrator.myapplication.http.Schedule;
-
 import org.junit.Test;
+
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 
 /**
@@ -13,7 +14,30 @@ import org.junit.Test;
 public class ExampleUnitTest {
     @Test
     public void addition_isCorrect() throws Exception {
-        Schedule schedule = new Schedule();
-        schedule.start();
+        String s = "/Date(1492414200000)/";
+
+        Pattern p = Pattern.compile("/Date\\((\\d+)\\)/");
+        Matcher matcher = p.matcher(s);
+        if (matcher.matches()) {
+            int i = matcher.groupCount();
+            String group = matcher.group(1);
+            System.out.println(i +"group="+group);
+        }
+
+        Object a = new A();
+        A a1 = new A();
+        B b = new B();
+
+        System.out.println(A.class.isAssignableFrom(a.getClass()));
+        System.out.println(B.class.isAssignableFrom(a.getClass()));
+
+    }
+
+    public static class A{
+        public  int a;
+    }
+
+    public static class B extends A{
+        public  int b;
     }
 }

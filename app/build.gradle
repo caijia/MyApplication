@@ -25,9 +25,9 @@ dependencies {
     androidTestCompile('com.android.support.test.espresso:espresso-core:2.2.2', {
         exclude group: 'com.android.support', module: 'support-annotations'
     })
-    compile 'com.android.support:design:25.1.0'
+    compile 'com.android.support:design:25.3.0'
     testCompile 'junit:junit:4.12'
-    compile 'com.android.support:percent:25.1.0'
+    compile 'com.android.support:percent:25.3.0'
     compile 'com.squareup.okhttp3:okhttp:3.5.0'
     compile 'com.google.code.gson:gson:2.8.0'
     compile 'com.loopj.android:android-async-http:1.4.9'
@@ -37,4 +37,5 @@ dependencies {
     compile 'com.squareup.retrofit2:retrofit:2.2.0'
     compile 'com.jakewharton.retrofit:retrofit2-rxjava2-adapter:1.0.0'
     compile 'com.squareup.retrofit2:converter-gson:2.2.0'
+    compile 'com.jakewharton.timber:timber:4.5.1'
 }

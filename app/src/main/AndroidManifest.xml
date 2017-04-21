@@ -81,15 +81,19 @@
         </activity>
 
         <activity android:name=".viewpager.ViewPagerActivity">
+
+        </activity>
+
+        <activity android:name=".rx.RxDemoActivity">
+
+        </activity>
+
+        <activity android:name=".recyclerview.SnapHelperDemoActivity">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
 
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
-        </activity>
-
-        <activity android:name=".rx.RxDemoActivity">
-
         </activity>
 
     </application>
