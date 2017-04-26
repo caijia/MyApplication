@@ -31,6 +31,9 @@ public class ExampleUnitTest {
         System.out.println(A.class.isAssignableFrom(a.getClass()));
         System.out.println(B.class.isAssignableFrom(a.getClass()));
 
+        int direction = 2 < 1 != true ? -1 : 1;
+        System.out.println("direction="+direction);
+
     }
 
     public static class A{

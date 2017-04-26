@@ -10,11 +10,17 @@ import android.view.View;
 
 public class GridSpacingItemDecoration extends RecyclerView.ItemDecoration {
 
+    private int spanCount;
     private int spacing;
     private boolean includeEdge;
     private Rect bounds;
     private Paint paint;
-    private int spanCount;
+
+    public GridSpacingItemDecoration(int spanCount, int spacing, boolean includeEdge) {
+        this.spanCount = spanCount;
+        this.spacing = spacing;
+        this.includeEdge = includeEdge;
+    }
 
     public GridSpacingItemDecoration(int spacing, boolean includeEdge, @ColorInt int color) {
         this.spacing = spacing;
@@ -26,7 +32,7 @@ public class GridSpacingItemDecoration extends RecyclerView.ItemDecoration {
 
     @Override
     public void onDrawOver(Canvas canvas, RecyclerView parent, RecyclerView.State state) {
-        if (spanCount == 0) {
+        if (spanCount == 0 || paint == null || bounds == null) {
             return;
         }
 
@@ -74,23 +80,22 @@ public class GridSpacingItemDecoration extends RecyclerView.ItemDecoration {
         canvas.restore();
     }
 
-    private void getSpanCount(RecyclerView recyclerView) {
-        RecyclerView.LayoutManager layoutManager = recyclerView.getLayoutManager();
+    @Override
+    public void getItemOffsets(Rect outRect, View view, RecyclerView parent, RecyclerView.State state) {
+        RecyclerView.LayoutManager layoutManager = parent.getLayoutManager();
         if (layoutManager == null || !(layoutManager instanceof GridLayoutManager)) {
             return;
         }
-
-        spanCount = ((GridLayoutManager) layoutManager).getSpanCount();
-    }
-
-    @Override
-    public void getItemOffsets(Rect outRect, View view, RecyclerView parent, RecyclerView.State state) {
-        getSpanCount(parent);
+        GridLayoutManager gridLayoutManager = (GridLayoutManager) layoutManager;
+        spanCount = gridLayoutManager.getSpanCount();
         if (spanCount == 0) {
             return;
         }
 
         int position = parent.getChildAdapterPosition(view); // item position
+        int itemSpanSize = gridLayoutManager.getSpanSizeLookup().getSpanSize(position);
+
+
         int column = position % spanCount; // item column
 
         if (includeEdge) {

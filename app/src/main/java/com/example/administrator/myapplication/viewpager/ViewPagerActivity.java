@@ -15,6 +15,7 @@ import android.widget.TextView;
 import com.example.administrator.myapplication.R;
 import com.example.administrator.myapplication.scroller.autoviewpager.AutoScrollViewPager;
 import com.example.administrator.myapplication.widget.CircleIndicator;
+import com.umeng.analytics.MobclickAgent;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -34,7 +35,7 @@ public class ViewPagerActivity extends AppCompatActivity {
     protected void onCreate(@Nullable Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_viewpager);
-
+        MobclickAgent.openActivityDurationTrack(false);
         viewPager = (AutoScrollViewPager) findViewById(R.id.viewpager);
         tabLayout = (TabLayout) findViewById(R.id.tab_layout);
         circleIndicator = (CircleIndicator) findViewById(R.id.circle_indicator);
@@ -97,7 +98,8 @@ public class ViewPagerActivity extends AppCompatActivity {
 
         @Nullable
         @Override
-        public View onCreateView(LayoutInflater inflater, @Nullable ViewGroup container, @Nullable Bundle savedInstanceState) {
+        public View onCreateView(LayoutInflater inflater, @Nullable ViewGroup container,
+                                 @Nullable Bundle savedInstanceState) {
             TextView textView = new TextView(container.getContext());
             textView.setText("Item position = " + position
                     + "---savedInstanceState="
@@ -110,9 +112,18 @@ public class ViewPagerActivity extends AppCompatActivity {
             super.onSaveInstanceState(outState);
             outState.putString("args", "Item=" + position);
         }
+
+//        public void onResume() {
+//            super.onResume();
+//            MobclickAgent.onPageStart("MainScreen"+position); //统计页面，"MainScreen"为页面名称，可自定义
+//        }
+//        public void onPause() {
+//            super.onPause();
+//            MobclickAgent.onPageEnd("MainScreen"+position);
+//        }
     }
 
-    private class MyPagerAdapter extends FragmentStatePagerAdapter {
+    private class MyPagerAdapter extends FragmentStatePagerAdapter implements CircleIndicator.LoopScroller{
 
         List<Fragment> fragments;
 
@@ -155,5 +166,22 @@ public class ViewPagerActivity extends AppCompatActivity {
         public int getItemPosition(Object object) {
             return POSITION_NONE;
         }
+
+        @Override
+        public int loopCount() {
+            return fragments.size();
+        }
     }
+
+//    public void onResume() {
+//        super.onResume();
+////        MobclickAgent.onPageStart(this.getClass().getCanonicalName()); //统计页面(仅有Activity的应用中SDK自动调用，不需要单独写。"SplashScreen"为页面名称，可自定义)
+//        MobclickAgent.onResume(this);          //统计时长
+//    }
+//
+//    public void onPause() {
+//        super.onPause();
+////        MobclickAgent.onPageEnd(this.getClass().getCanonicalName()); // （仅有Activity的应用中SDK自动调用，不需要单独写）保证 onPageEnd 在onPause 之前调用,因为 onPause 中会保存信息。"SplashScreen"为页面名称，可自定义
+//        MobclickAgent.onPause(this);
+//    }
 }

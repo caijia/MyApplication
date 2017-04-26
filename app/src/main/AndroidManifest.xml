@@ -96,6 +96,9 @@
             </intent-filter>
         </activity>
 
+        <meta-data android:value="522fdabc56240b7a6604cdb6" android:name="UMENG_APPKEY"/>
+        <meta-data android:value="Wandoujia" android:name="UMENG_CHANNEL"/>
+
     </application>
 
 </manifest>

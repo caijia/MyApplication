@@ -27,6 +27,14 @@ public class SnapHelperAdapter extends RecyclerView.Adapter<SnapHelperAdapter.Sn
         inflater = LayoutInflater.from(context);
     }
 
+    public List<String> getData() {
+        return list;
+    }
+
+    public void setData(List<String> list) {
+        this.list = list;
+    }
+
     @Override
     public SnapVH onCreateViewHolder(ViewGroup parent, int viewType) {
         System.out.println("onCreateViewHolder");
@@ -36,17 +44,18 @@ public class SnapHelperAdapter extends RecyclerView.Adapter<SnapHelperAdapter.Sn
 
     @Override
     public void onBindViewHolder(SnapVH holder, int position) {
-        holder.itemTv.setText(list.get(position));
+        holder.itemTv.setText(list.get(position % list.size()));
     }
 
     @Override
     public int getItemCount() {
-        return list.size();
+        return list.size() * 1000;
     }
 
-    static class SnapVH extends RecyclerView.ViewHolder{
+    static class SnapVH extends RecyclerView.ViewHolder {
 
         TextView itemTv;
+
         public SnapVH(View itemView) {
             super(itemView);
             itemTv = (TextView) itemView.findViewById(R.id.item_tv);

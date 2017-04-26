@@ -36,7 +36,17 @@ public class MyRecyclerViewActivity extends AppCompatActivity implements View.On
 
         int color = ResourcesCompat.getColor(getResources(), R.color.divider, getTheme());
         recyclerView.addItemDecoration(new GridSpacingItemDecoration(12,true,color));
-        recyclerView.setLayoutManager(new GridLayoutManager(this,2));
+        GridLayoutManager gridLayoutManager = new GridLayoutManager(this, 2);
+        gridLayoutManager.setSpanSizeLookup(new GridLayoutManager.SpanSizeLookup() {
+            @Override
+            public int getSpanSize(int position) {
+                if (position == 1 || position == 2 || position == 3) {
+                    return 2;
+                }
+                return 1;
+            }
+        });
+        recyclerView.setLayoutManager(gridLayoutManager);
         RecyclerView.ItemAnimator animator = new MyDefaultItemAnimator();
         animator.setRemoveDuration(2000);
         animator.setAddDuration(2000);

@@ -29,6 +29,7 @@ public class AutoScrollViewPager extends ViewPager {
     private CheckPageChangeListener pageChangeListener = new CheckPageChangeListener();
     private boolean motionEventUpOrCancel;
     private int scrollFactor = 5;
+    private boolean autoScroll;
 
     public AutoScrollViewPager(Context paramContext) {
         super(paramContext);
@@ -45,6 +46,18 @@ public class AutoScrollViewPager extends ViewPager {
         setViewPagerScroller();
         scroller.setScrollDurationFactor(scrollFactor);
         addOnPageChangeListener(pageChangeListener);
+    }
+
+    @Override
+    protected void onAttachedToWindow() {
+        super.onAttachedToWindow();
+        startAutoScroll();
+    }
+
+    @Override
+    protected void onDetachedFromWindow() {
+        super.onDetachedFromWindow();
+        stopAutoScroll();
     }
 
     public void startAutoScroll() {
@@ -64,6 +77,9 @@ public class AutoScrollViewPager extends ViewPager {
     }
 
     private void sendScrollMessage(long delayTimeInMills) {
+        if (!autoScroll) {
+            return;
+        }
         handler.removeMessages(SCROLL_WHAT);
         handler.sendEmptyMessageDelayed(SCROLL_WHAT, delayTimeInMills);
     }
@@ -100,8 +116,15 @@ public class AutoScrollViewPager extends ViewPager {
         }
     }
 
+    public void setAutoScroll(boolean autoScroll) {
+        this.autoScroll = autoScroll;
+    }
+
     @Override
     public boolean dispatchTouchEvent(MotionEvent ev) {
+        if (!autoScroll) {
+            return super.dispatchTouchEvent(ev);
+        }
         switch (ev.getActionMasked()) {
             case MotionEvent.ACTION_DOWN: {
                 stopAutoScroll();
