@@ -1,14 +1,20 @@
 package com.example.administrator.myapplication.recyclerview.adapter;
 
 import android.content.Context;
+import android.support.annotation.NonNull;
+import android.support.annotation.Nullable;
+import android.support.v7.util.DiffUtil;
 import android.support.v7.widget.RecyclerView;
+import android.text.TextUtils;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.TextView;
 
 import com.example.administrator.myapplication.R;
+import com.example.administrator.myapplication.recyclerview.MyRecyclerViewActivity.Student;
 
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
@@ -19,11 +25,15 @@ import java.util.List;
 public class MyAdapter extends RecyclerView.Adapter<MyAdapter.MyViewHolder> {
 
     private Context context;
-    private List<String> list;
+    private List<Student> oldList;
+    private List<Student> newList;
+    private DiffCallback diffCallback;
 
-    public MyAdapter(Context context, List<String> list) {
+    public MyAdapter(Context context) {
         this.context = context;
-        this.list = list;
+        oldList = new ArrayList<>();
+        newList = new ArrayList<>();
+        diffCallback = new DiffCallback();
     }
 
     @Override
@@ -35,31 +45,50 @@ public class MyAdapter extends RecyclerView.Adapter<MyAdapter.MyViewHolder> {
 
     @Override
     public void onBindViewHolder(MyViewHolder holder, int position) {
-        holder.textView.setText(list.get(position));
+        System.out.println("adapter position="+holder.getAdapterPosition());
+        Student item = getItem(position);
+        holder.textView.setText(item.getName()+"age="+item.getAge());
+    }
+
+    @Override
+    public void onBindViewHolder(MyViewHolder holder, int position, List<Object> payloads) {
+        if (payloads == null || payloads.isEmpty()) {
+            super.onBindViewHolder(holder, position, payloads);
+
+        }else{
+            Object o = payloads.get(0);
+            if (o instanceof Student) {
+                Student item = (Student) o;
+                holder.textView.setText(item.getName()+"age="+item.getAge());
+            }
+        }
     }
 
     @Override
     public int getItemCount() {
-        return list.size();
+        return oldList == null ? 0 : oldList.size();
+    }
+
+    public Student getItem(int position) {
+        return oldList.get(position);
     }
 
     public void swapPosition(int fromPos, int toPos) {
-        Collections.swap(list, toPos, fromPos);
+        Collections.swap(oldList, toPos, fromPos);
         notifyItemMoved(fromPos,toPos);
     }
 
+    public void setList(List<Student> list) {
+        this.oldList = list;
+    }
+
     public void remove(int adapterPosition) {
-        list.remove(adapterPosition);
+        oldList.remove(adapterPosition);
         notifyItemRemoved(adapterPosition);
     }
 
-    public void add(int i) {
-        list.add(0,"ITEM Add");
-        notifyItemInserted(0);
-    }
-
-    public void change(int i) {
-        notifyItemChanged(0);
+    public List<Student> getList() {
+        return oldList;
     }
 
     static class MyViewHolder extends RecyclerView.ViewHolder{
@@ -71,4 +100,46 @@ public class MyAdapter extends RecyclerView.Adapter<MyAdapter.MyViewHolder> {
             textView = (TextView) itemView.findViewById(R.id.item_text);
         }
     }
+
+    public void updateAllItem(@NonNull List<Student> list) {
+        this.oldList = list;
+        notifyDataSetChanged();
+    }
+
+    public void updateDiffItem(@NonNull List<Student> newList) {
+        this.newList = newList;
+        DiffUtil.DiffResult result = DiffUtil.calculateDiff(diffCallback);
+        result.dispatchUpdatesTo(this);
+    }
+
+    private class DiffCallback extends DiffUtil.Callback{
+
+        @Override
+        public int getOldListSize() {
+            return oldList.size();
+        }
+
+        @Override
+        public int getNewListSize() {
+            return newList.size();
+        }
+
+        @Override
+        public boolean areItemsTheSame(int oldItemPosition, int newItemPosition) {
+            return oldList.get(oldItemPosition).getId() == newList.get(newItemPosition).getId();
+        }
+
+        @Override
+        public boolean areContentsTheSame(int oldItemPosition, int newItemPosition) {
+            return TextUtils.equals(oldList.get(oldItemPosition).getName(),
+                    newList.get(newItemPosition).getName());
+        }
+
+        @Nullable
+        @Override
+        public Object getChangePayload(int oldItemPosition, int newItemPosition) {
+            return newList.get(newItemPosition);
+        }
+    }
+
 }
