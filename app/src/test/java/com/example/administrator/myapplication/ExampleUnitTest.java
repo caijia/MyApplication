@@ -28,12 +28,8 @@ public class ExampleUnitTest {
         A a1 = new A();
         B b = new B();
 
-        System.out.println(A.class.isAssignableFrom(a.getClass()));
+        System.out.println(A.class.isAssignableFrom(b.getClass()));
         System.out.println(B.class.isAssignableFrom(a.getClass()));
-
-        int direction = 2 < 1 != true ? -1 : 1;
-        System.out.println("direction="+direction);
-
     }
 
     public static class A{
