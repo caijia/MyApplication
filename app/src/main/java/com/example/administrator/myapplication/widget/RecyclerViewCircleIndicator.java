@@ -14,7 +14,7 @@ import android.util.TypedValue;
 import android.view.View;
 
 import com.example.administrator.myapplication.R;
-import com.example.administrator.myapplication.recyclerview.snapHelper.PageChangeSnapHelper;
+import com.example.administrator.myapplication.recyclerview.helper.PageChangeSnapHelper;
 
 /**
  * RecyclerView ViewPager模式时的指示器

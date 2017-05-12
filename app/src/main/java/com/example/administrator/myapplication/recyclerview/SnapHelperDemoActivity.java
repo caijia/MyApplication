@@ -9,10 +9,10 @@ import android.support.v7.widget.RecyclerView;
 import android.view.View;
 
 import com.example.administrator.myapplication.R;
-import com.example.administrator.myapplication.recyclerview.snapHelper.AutoScrollerLinearLayoutManager;
-import com.example.administrator.myapplication.recyclerview.snapHelper.LooperRecyclerViewHelper;
-import com.example.administrator.myapplication.recyclerview.snapHelper.PageChangeSnapHelper;
-import com.example.administrator.myapplication.recyclerview.snapHelper.SnapHelperAdapter;
+import com.example.administrator.myapplication.recyclerview.helper.AutoScrollerLinearLayoutManager;
+import com.example.administrator.myapplication.recyclerview.helper.LooperRecyclerViewHelper;
+import com.example.administrator.myapplication.recyclerview.helper.PageChangeSnapHelper;
+import com.example.administrator.myapplication.recyclerview.helper.SnapHelperAdapter;
 import com.example.administrator.myapplication.widget.RecyclerViewCircleIndicator;
 
 import java.util.ArrayList;

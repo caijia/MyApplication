@@ -41,4 +41,6 @@ dependencies {
     compile 'frankiesardo:icepick:3.2.0'
     provided 'frankiesardo:icepick-processor:3.2.0'
     compile 'com.umeng.analytics:analytics:latest.integration'
+    compile 'com.nshmura:recyclertablayout:1.1.0'
+    compile 'com.hannesdorfmann:adapterdelegates3:3.0.1'
 }

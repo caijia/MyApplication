@@ -1,4 +1,4 @@
-package com.example.administrator.myapplication.recyclerview.snapHelper;
+package com.example.administrator.myapplication.recyclerview.helper;
 
 import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;

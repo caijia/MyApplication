@@ -1,4 +1,4 @@
-package com.example.administrator.myapplication.recyclerview.snapHelper;
+package com.example.administrator.myapplication.recyclerview.helper;
 
 import android.content.Context;
 import android.support.v7.widget.RecyclerView;

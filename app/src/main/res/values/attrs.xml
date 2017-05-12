@@ -30,4 +30,11 @@
         <attr name="space" format="dimension" />
         <attr name="smoothScroll" format="boolean" />
     </declare-styleable>
+
+    <declare-styleable name="LoadMoreFooterView">
+        <attr name="loading_text" format="string"/>
+        <attr name="error_text" format="string"/>
+        <attr name="end_text" format="string"/>
+        <attr name="lf_color" format="color"/>
+    </declare-styleable>
 </resources>
