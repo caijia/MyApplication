@@ -18,7 +18,7 @@ import java.util.List;
  * Created by cai.jia on 2017/5/9 0009
  */
 
-public class ItemViewDelegateManager<T> {
+public class ItemViewDelegateManager {
 
     private SparseArrayCompat<ItemViewDelegate> delegates;
     private LayoutInflater layoutInflater;
@@ -47,7 +47,7 @@ public class ItemViewDelegateManager<T> {
         }
     }
 
-    public int getItemViewType(T item) {
+    public int getItemViewType(Object item) {
         if (item == null) {
             return -1;
         }
@@ -59,6 +59,10 @@ public class ItemViewDelegateManager<T> {
             }
         }
         return -1;
+    }
+
+    public ItemViewDelegate findItemDelegate(Object item) {
+        return getDelegateForViewType(getItemViewType(item));
     }
 
     public
@@ -78,7 +82,7 @@ public class ItemViewDelegateManager<T> {
         return delegate.onCreateViewHolder(layoutInflater,parent, viewType);
     }
 
-    public void onBindViewHolder(List<T> dataSource, RecyclerView.Adapter adapter,
+    public void onBindViewHolder(List<?> dataSource, RecyclerView.Adapter adapter,
                                  RecyclerView.ViewHolder holder, int position) {
         ItemViewDelegate delegate = getDelegateForViewType(holder.getItemViewType());
         if (delegate != null) {
@@ -87,7 +91,7 @@ public class ItemViewDelegateManager<T> {
         }
     }
 
-    public void onBindViewHolder(List<T> dataSource, RecyclerView.Adapter adapter,
+    public void onBindViewHolder(List<?> dataSource, RecyclerView.Adapter adapter,
                                  RecyclerView.ViewHolder holder, int position, List<Object> payloads) {
         if (payloads != null && !payloads.isEmpty()) {
             ItemViewDelegate delegate = getDelegateForViewType(holder.getItemViewType());

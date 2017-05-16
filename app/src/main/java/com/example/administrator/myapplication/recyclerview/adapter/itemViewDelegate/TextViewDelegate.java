@@ -17,7 +17,7 @@ import java.util.List;
  * Created by cai.jia on 2017/5/12 0012
  */
 
-public class TextViewDelegate extends ItemViewDelegate<TextObj,Object,TextViewDelegate.TextVH> {
+public class TextViewDelegate extends ItemViewDelegate<TextObj,TextViewDelegate.TextVH> {
 
     @Override
     public TextVH onCreateViewHolder(LayoutInflater inflater, ViewGroup parent, int viewType) {
@@ -26,9 +26,10 @@ public class TextViewDelegate extends ItemViewDelegate<TextObj,Object,TextViewDe
     }
 
     @Override
-    public void onBindViewHolder(List<Object> dataSource, TextObj textObj,
+    public void onBindViewHolder(List<?> dataSource, TextObj textObj,
                                  RecyclerView.Adapter adapter, TextVH holder, int position) {
         holder.textView.setText(textObj.getText());
+        System.out.println("position=" + position);
     }
 
     @Override

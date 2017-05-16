@@ -6,8 +6,9 @@ import android.support.v4.view.ViewPager;
 import android.support.v7.app.AppCompatActivity;
 
 import com.example.administrator.myapplication.R;
+import com.example.administrator.myapplication.recyclerview.RecyclerTabLayout;
 import com.example.administrator.myapplication.recyclerview.adapter.ViewPagerAdapter;
-import com.nshmura.recyclertablayout.RecyclerTabLayout;
+
 
 /**
  * Created by cai.jia on 2017/5/11 0011

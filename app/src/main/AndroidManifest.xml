@@ -97,6 +97,10 @@
         </activity>
 
         <activity android:name=".recyclerview.MultiTypeActivity">
+
+        </activity>
+
+        <activity android:name=".recyclerview.TabLayoutActivity">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
 

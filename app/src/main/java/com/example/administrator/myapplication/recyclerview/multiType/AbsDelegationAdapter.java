@@ -1,5 +1,6 @@
 package com.example.administrator.myapplication.recyclerview.multiType;
 
+import android.support.annotation.NonNull;
 import android.support.v7.widget.RecyclerView;
 import android.view.ViewGroup;
 
@@ -12,20 +13,18 @@ import java.util.List;
  * Created by cai.jia on 2017/5/12 0012
  */
 
-public class AbsDelegationAdapter<T> extends RecyclerView.Adapter<RecyclerView.ViewHolder> {
+public class AbsDelegationAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> {
 
-    public ItemViewDelegateManager<T> delegateManager;
+    public ItemViewDelegateManager delegateManager;
 
-    private List<T> dataSource;
+    private List<?> dataSource;
 
     public AbsDelegationAdapter() {
-        this(new ItemViewDelegateManager<T>());
+        this(new ItemViewDelegateManager());
     }
 
-    public AbsDelegationAdapter(ItemViewDelegateManager<T> delegateManager) {
-        if (delegateManager != null) {
-            this.delegateManager = delegateManager;
-        }
+    public AbsDelegationAdapter(@NonNull ItemViewDelegateManager delegateManager) {
+        this.delegateManager = delegateManager;
     }
 
     @Override
@@ -48,15 +47,15 @@ public class AbsDelegationAdapter<T> extends RecyclerView.Adapter<RecyclerView.V
         return dataSource == null ? 0 : dataSource.size();
     }
 
-    public T getItem(int position) {
+    public Object getItem(int position) {
         return dataSource == null ? null : dataSource.get(position);
     }
 
-    public List<T> getDataSource() {
+    public List<?> getDataSource() {
         return dataSource;
     }
 
-    public void setDataSource(List<T> dataSource) {
+    public void setDataSource(List<?> dataSource) {
         this.dataSource = dataSource;
     }
 

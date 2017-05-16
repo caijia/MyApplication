@@ -41,12 +41,17 @@ public class LoadMoreHelper {
             RecyclerView.LayoutManager layoutManager = recyclerView.getLayoutManager();
             int visibleItemCount = layoutManager.getChildCount();
 
-            if (scrolled && visibleItemCount > 0 && newState == RecyclerView.SCROLL_STATE_IDLE
-                    && !ViewCompat.canScrollVertically(recyclerView, 1)) {
-
+            if (scrolled && visibleItemCount > 0 && newState == RecyclerView.SCROLL_STATE_IDLE) {
                 scrolled = false;
-                if (loadMoreListener != null) {
-                    loadMoreListener.onLoadMore();
+                boolean horizontalScroll = layoutManager.canScrollHorizontally();
+                boolean verticalScroll = layoutManager.canScrollVertically();
+
+                if (verticalScroll && !ViewCompat.canScrollVertically(recyclerView, 1)
+                        || horizontalScroll && !ViewCompat.canScrollHorizontally(recyclerView, 1)) {
+
+                    if (loadMoreListener != null) {
+                        loadMoreListener.onLoadMore(recyclerView);
+                    }
                 }
             }
         }
@@ -65,7 +70,7 @@ public class LoadMoreHelper {
 
     public interface OnLoadMoreListener{
 
-        void onLoadMore();
+        void onLoadMore(RecyclerView recyclerView);
 
     }
 }

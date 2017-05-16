@@ -14,22 +14,22 @@ import java.util.List;
  * Created by cai.jia on 2017/5/9 0009
  */
 
-public abstract class ItemViewDelegate<Item extends T, T, VH extends RecyclerView.ViewHolder> {
+public abstract class ItemViewDelegate<Item,VH extends RecyclerView.ViewHolder> {
 
     public abstract VH onCreateViewHolder(LayoutInflater inflater,ViewGroup parent, int viewType);
 
-    public abstract void onBindViewHolder(List<T> dataSource, Item item,
+    public abstract void onBindViewHolder(List<?> dataSource, Item item,
                                           RecyclerView.Adapter adapter, VH holder, int position);
 
-    public void onBindViewHolder(List<T> dataSource, Item item, RecyclerView.Adapter adapter,
+    public void onBindViewHolder(List<?> dataSource, Item item, RecyclerView.Adapter adapter,
                                  VH holder, int position, List<Object> payloads) {
     }
 
-    public Item getItem(List<T> dataSource,RecyclerView.Adapter adapter, VH holder, int position) {
+    public Item getItem(List<?> dataSource,RecyclerView.Adapter adapter, VH holder, int position) {
         return (Item) dataSource.get(position);
     }
 
-    public abstract boolean isForViewType(@NonNull T item);
+    public abstract boolean isForViewType(@NonNull Object item);
 
     public void onViewRecycled(VH holder) {
     }
