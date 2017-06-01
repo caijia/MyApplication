@@ -5,11 +5,16 @@ import android.support.annotation.Nullable;
 import android.support.v4.view.ViewPager;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.LinearLayoutManager;
+import android.support.v7.widget.Toolbar;
+import android.view.View;
+import android.widget.Toast;
 
 import com.example.administrator.myapplication.R;
+import com.example.administrator.myapplication.helper.NavigationHelper;
 import com.example.administrator.myapplication.recyclerview.adapter.ViewPagerAdapter;
 import com.example.administrator.myapplication.recyclerview.adapter.itemViewDelegate.HorizontalItemDelegate;
 import com.example.administrator.myapplication.recyclerview.multiType.LoadMoreDelegationAdapter;
+import com.example.administrator.myapplication.recyclerview.tabLayout.RectTabIndicator;
 import com.example.administrator.myapplication.recyclerview.tabLayout.TabLayout;
 
 import java.util.ArrayList;
@@ -23,6 +28,7 @@ public class TabLayoutActivity extends AppCompatActivity {
 
     private TabLayout tabLayout;
     private ViewPager viewPager;
+    private Toolbar toolbar;
     private LoadMoreDelegationAdapter mAdapter;
 
     @Override
@@ -32,8 +38,10 @@ public class TabLayoutActivity extends AppCompatActivity {
 
         tabLayout = (TabLayout) findViewById(R.id.tab_layout);
         viewPager = (ViewPager) findViewById(R.id.view_pager);
+        toolbar = (Toolbar) findViewById(R.id.toolbar);
 
         tabLayout.setLayoutManager(new LinearLayoutManager(this, LinearLayoutManager.HORIZONTAL, false));
+        tabLayout.setTabIndicator(new RectTabIndicator(this, 2, 24, R.color.colorAccent));
         mAdapter = new LoadMoreDelegationAdapter(false, null);
         mAdapter.delegateManager.addDelegate(new HorizontalItemDelegate());
         tabLayout.setAdapter(mAdapter);

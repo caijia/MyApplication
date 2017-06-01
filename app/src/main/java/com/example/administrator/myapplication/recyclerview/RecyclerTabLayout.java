@@ -344,7 +344,6 @@ public class RecyclerTabLayout extends RecyclerView {
         int top = getHeight() - mIndicatorHeight;
         int bottom = getHeight();
 
-        System.out.println("left=" + left + "---right=" + right + "---top=" + top + "---bottom=" + bottom);
         canvas.drawRect(left, top, right, bottom, mIndicatorPaint);
     }
 

@@ -16,6 +16,7 @@
     <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION" />
     <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION" />
     <uses-permission android:name="android.permission.GET_TASKS" />
+    <uses-permission android:name="android.permission.CAMERA"/>
     <uses-permission android:name="android.permission.CHANGE_WIFI_STATE" />
 
     <application
@@ -88,6 +89,14 @@
 
         </activity>
 
+        <activity android:name=".textureview.PlayVideoActivity" >
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+
+                <category android:name="android.intent.category.LAUNCHER" />
+            </intent-filter>
+        </activity>
+
         <activity android:name=".recyclerview.tab.TabDemoActivity">
 
         </activity>
@@ -101,11 +110,7 @@
         </activity>
 
         <activity android:name=".recyclerview.TabLayoutActivity">
-            <intent-filter>
-                <action android:name="android.intent.action.MAIN" />
 
-                <category android:name="android.intent.category.LAUNCHER" />
-            </intent-filter>
         </activity>
 
         <meta-data android:value="522fdabc56240b7a6604cdb6" android:name="UMENG_APPKEY"/>
