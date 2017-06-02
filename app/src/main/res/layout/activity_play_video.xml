@@ -4,9 +4,9 @@
     android:layout_height="match_parent"
     android:orientation="vertical">
 
-    <com.example.administrator.myapplication.widget.GradientViewPager
-        android:id="@+id/view_pager"
+    <TextureView
+        android:id="@+id/texture_view"
         android:layout_width="match_parent"
-        android:layout_height="170dp"/>
+        android:layout_height="170dp" />
 
 </LinearLayout>

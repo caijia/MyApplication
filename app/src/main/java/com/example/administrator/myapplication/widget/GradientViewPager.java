@@ -25,11 +25,20 @@ import java.lang.ref.WeakReference;
 
 public class GradientViewPager extends FrameLayout {
 
+    private static final int INTERVAL = 6000;
     private View firstView;
     private View secondView;
     private boolean firstViewVisible;
     private int position;
     private Handler handler;
+    private ViewAdapter adapter;
+    private Runnable task = new Runnable() {
+        @Override
+        public void run() {
+            handler.sendEmptyMessage(200);
+            handler.postDelayed(this, INTERVAL);
+        }
+    };
 
     public GradientViewPager(@NonNull Context context) {
         this(context, null);
@@ -54,14 +63,14 @@ public class GradientViewPager extends FrameLayout {
         handler = new LooperHandler(this);
     }
 
-    private ViewAdapter adapter;
-
     public void setAdapter(ViewAdapter adapter) {
         if (adapter == null) {
             return;
         }
 
         position = 0;
+        firstViewVisible = true;
+
         this.adapter = adapter;
         int childCount = getChildCount();
         if (childCount == 0) {
@@ -73,7 +82,7 @@ public class GradientViewPager extends FrameLayout {
                 position++;
             }
 
-        }else{
+        } else {
 
             for (int i = 0; i < 2; i++) {
                 View view = getChildAt(i);
@@ -93,16 +102,8 @@ public class GradientViewPager extends FrameLayout {
 
     private void start() {
         stop();
-        handler.postDelayed(task, 4000);
+        handler.postDelayed(task, INTERVAL);
     }
-
-    private Runnable task = new Runnable() {
-        @Override
-        public void run() {
-            handler.sendEmptyMessage(200);
-            handler.postDelayed(this, 4000);
-        }
-    };
 
     private void stop() {
         handler.removeMessages(200);
@@ -110,7 +111,7 @@ public class GradientViewPager extends FrameLayout {
     }
 
     private void gradientSwitchView() {
-        ValueAnimator valueAnimator = ValueAnimator.ofFloat(0, 1).setDuration(300);
+        ValueAnimator valueAnimator = ValueAnimator.ofFloat(0, 1).setDuration(1000);
         valueAnimator.addUpdateListener(new ValueAnimator.AnimatorUpdateListener() {
             @Override
             public void onAnimationUpdate(ValueAnimator animation) {
@@ -123,9 +124,22 @@ public class GradientViewPager extends FrameLayout {
             @Override
             public void onAnimationEnd(Animator animation) {
                 firstViewVisible = !firstViewVisible;
-                adapter.bindView(!firstViewVisible ? firstView : secondView, ++position);
+                adapter.bindView(firstViewVisible ? firstView : secondView, ++position);
             }
         });
+        valueAnimator.start();
+    }
+
+    @Override
+    protected void onAttachedToWindow() {
+        super.onAttachedToWindow();
+        start();
+    }
+
+    @Override
+    protected void onDetachedFromWindow() {
+        super.onDetachedFromWindow();
+        stop();
     }
 
     public interface ViewAdapter {
@@ -149,18 +163,6 @@ public class GradientViewPager extends FrameLayout {
                 ref.get().gradientSwitchView();
             }
         }
-    }
-
-    @Override
-    protected void onAttachedToWindow() {
-        super.onAttachedToWindow();
-        start();
-    }
-
-    @Override
-    protected void onDetachedFromWindow() {
-        super.onDetachedFromWindow();
-        stop();
     }
 
     private static class SimpleAnimatorListener implements Animator.AnimatorListener {

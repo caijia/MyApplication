@@ -43,4 +43,8 @@ dependencies {
     compile 'com.umeng.analytics:analytics:latest.integration'
     compile 'com.nshmura:recyclertablayout:1.1.0'
     compile 'com.hannesdorfmann:adapterdelegates3:3.0.1'
+    compile 'com.github.bumptech.glide:glide:3.7.0'
+    debugCompile 'com.squareup.leakcanary:leakcanary-android:1.5.1'
+    releaseCompile 'com.squareup.leakcanary:leakcanary-android-no-op:1.5.1'
+    testCompile 'com.squareup.leakcanary:leakcanary-android-no-op:1.5.1'
 }
