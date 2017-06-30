@@ -13,7 +13,8 @@ import java.io.IOException;
 
 public class MediaPlayerHelper implements MediaPlayer.OnPreparedListener,
         MediaPlayer.OnCompletionListener, MediaPlayer.OnErrorListener,
-        MediaPlayer.OnBufferingUpdateListener, MediaPlayer.OnInfoListener {
+        MediaPlayer.OnBufferingUpdateListener, MediaPlayer.OnInfoListener,
+        MediaProgressHelper.OnPlayMediaProgressListener, MediaPlayer.OnVideoSizeChangedListener {
 
     private static final int STATE_ERROR = -1;
     private static final int STATE_IDLE = 0;
@@ -23,79 +24,112 @@ public class MediaPlayerHelper implements MediaPlayer.OnPreparedListener,
     private static final int STATE_PAUSED = 4;
     private static final int STATE_PLAYBACK_COMPLETED = 5;
 
-    private static volatile MediaPlayerHelper instance;
     private MediaPlayer mediaPlayer;
-    private MediaCallback callback;
+    private OnPlayMediaListener callback;
+    private MediaProgressHelper progressHelper;
 
     private int currentState = STATE_IDLE;
-    private int currentPosition;
 
-    private MediaPlayerHelper() {
-
-    }
-
-    public static MediaPlayerHelper getInstance() {
-        if (instance == null) {
-            synchronized (MediaPlayerHelper.class) {
-                if (instance == null) {
-                    instance = new MediaPlayerHelper();
-                }
-            }
-        }
-        return instance;
-    }
-
-    public void startPlay(@NonNull String url, @Nullable MediaCallback callback) {
-        startPlay(url, null, callback);
-    }
-
-    public void startPlay(@NonNull String url, @Nullable Surface surface,
-                          @Nullable final MediaCallback callback) {
+    public void setOnPlayMediaListener(OnPlayMediaListener callback) {
         this.callback = callback;
+    }
+
+    public void setDataSource(@NonNull String url) {
+        setDataSource(url, null);
+    }
+
+    public void setDataSource(@NonNull String url, @Nullable Surface surface) {
         try {
             release();
             if (mediaPlayer == null) {
                 mediaPlayer = new MediaPlayer();
             }
 
+            if (progressHelper == null) {
+                progressHelper = new MediaProgressHelper(this);
+            }
+            progressHelper.setOnPlayMediaProgressListener(this);
+            System.out.println("setDataSource");
             mediaPlayer.setDataSource(url);
             if (surface != null) {
                 mediaPlayer.setSurface(surface);
             }
 
-            if (callback != null) {
-                mediaPlayer.setOnPreparedListener(this);
-                mediaPlayer.setOnCompletionListener(this);
-                mediaPlayer.setOnErrorListener(this);
-                mediaPlayer.setOnBufferingUpdateListener(this);
-                mediaPlayer.setOnInfoListener(this);
-            }
+            mediaPlayer.setOnPreparedListener(this);
+            mediaPlayer.setOnCompletionListener(this);
+            mediaPlayer.setOnErrorListener(this);
+            mediaPlayer.setOnBufferingUpdateListener(this);
+            mediaPlayer.setOnInfoListener(this);
+            mediaPlayer.setOnVideoSizeChangedListener(this);
 
-            mediaPlayer.prepareAsync();
-            currentState = STATE_PREPARING;
         } catch (IOException e) {
             e.printStackTrace();
+            currentState = STATE_ERROR;
+            if (callback != null) {
+                callback.onError(mediaPlayer, MediaPlayer.MEDIA_ERROR_UNKNOWN, -1);
+            }
         }
     }
 
-    public void stopPlay() {
+    public void prepareAsync() {
+        try {
+            if (mediaPlayer != null) {
+                mediaPlayer.prepareAsync();
+                currentState = STATE_PREPARED;
+            }
+
+        } catch (Exception e) {
+            e.printStackTrace();
+            currentState = STATE_ERROR;
+            if (callback != null) {
+                callback.onError(mediaPlayer, MediaPlayer.MEDIA_ERROR_UNKNOWN, -1);
+            }
+        }
+    }
+
+    public void stopPlayback() {
         callback = null;
-        currentPosition = 0;
         if (mediaPlayer != null) {
             mediaPlayer.stop();
             mediaPlayer.release();
             mediaPlayer = null;
             currentState = STATE_IDLE;
         }
+
+        if (progressHelper != null) {
+            progressHelper.stop();
+        }
     }
 
     public void resume() {
         if (isInPlaybackState()) {
             if (!mediaPlayer.isPlaying() && currentState == STATE_PAUSED) {
-                mediaPlayer.seekTo(currentPosition);
                 mediaPlayer.start();
                 currentState = STATE_PLAYING;
+
+            }else if(currentState == STATE_PLAYBACK_COMPLETED){
+               seekTo(0);
             }
+        }
+
+        if (progressHelper != null) {
+            progressHelper.start();
+        }
+    }
+
+    public void start() {
+        if (isInPlaybackState()) {
+            if (!mediaPlayer.isPlaying()) {
+                mediaPlayer.start();
+                currentState = STATE_PLAYING;
+
+            }else if(currentState == STATE_PLAYBACK_COMPLETED){
+                seekTo(0);
+            }
+        }
+
+        if (progressHelper != null) {
+            progressHelper.start();
         }
     }
 
@@ -103,23 +137,24 @@ public class MediaPlayerHelper implements MediaPlayer.OnPreparedListener,
         if (isInPlaybackState()) {
             if (mediaPlayer.isPlaying()) {
                 mediaPlayer.pause();
-                currentPosition = mediaPlayer.getCurrentPosition();
                 currentState = STATE_PAUSED;
             }
+        }
+
+        if (progressHelper != null) {
+            progressHelper.stop();
         }
     }
 
     public void seekTo(int currentPosition) {
         if (isInPlaybackState()) {
             mediaPlayer.seekTo(currentPosition);
-            mediaPlayer.start();
         }
     }
 
     public void relativeSeekTo(int msec) {
         if (isInPlaybackState()) {
-            mediaPlayer.seekTo(currentPosition + msec);
-            mediaPlayer.start();
+            seekTo(mediaPlayer.getCurrentPosition() + msec);
         }
     }
 
@@ -130,7 +165,7 @@ public class MediaPlayerHelper implements MediaPlayer.OnPreparedListener,
                 currentState != STATE_PREPARING);
     }
 
-    private void release() {
+    public void release() {
         if (mediaPlayer != null) {
             mediaPlayer.reset();
             mediaPlayer.release();
@@ -141,9 +176,6 @@ public class MediaPlayerHelper implements MediaPlayer.OnPreparedListener,
     @Override
     public void onPrepared(MediaPlayer mp) {
         currentState = STATE_PREPARED;
-        mp.seekTo(currentPosition);
-        mp.start();
-        currentState = STATE_PLAYING;
         if (callback != null) {
             callback.onPrepared(mp);
         }
@@ -152,18 +184,30 @@ public class MediaPlayerHelper implements MediaPlayer.OnPreparedListener,
     @Override
     public void onCompletion(MediaPlayer mp) {
         currentState = STATE_PLAYBACK_COMPLETED;
+        seekTo(0);
         if (callback != null) {
             callback.onCompletion(mp);
+            int duration = mediaPlayer.getDuration();
+            callback.onPlayMediaProgress(duration, duration);
+        }
+
+        if (progressHelper != null) {
+            progressHelper.stop();
         }
     }
 
     @Override
     public boolean onError(MediaPlayer mp, int what, int extra) {
         currentState = STATE_ERROR;
-        if (callback != null) {
-            return callback.onError(mp, what, extra);
+        if (progressHelper != null) {
+            progressHelper.stop();
         }
-        return false;
+
+        if (callback != null) {
+            callback.onError(mp, what, extra);
+            return true;
+        }
+        return true;
     }
 
     @Override
@@ -181,36 +225,37 @@ public class MediaPlayerHelper implements MediaPlayer.OnPreparedListener,
         return false;
     }
 
-    public interface MediaCallback extends MediaPlayer.OnBufferingUpdateListener,
-            MediaPlayer.OnCompletionListener, MediaPlayer.OnErrorListener,
-            MediaPlayer.OnInfoListener, MediaPlayer.OnPreparedListener {
+    @Override
+    public void onPlayMediaProgress(long duration, long currentPosition) {
+        if (callback != null) {
+            callback.onPlayMediaProgress(duration, currentPosition);
+        }
     }
 
-    public static class SimpleMediaCallback implements MediaCallback {
-
-        @Override
-        public void onBufferingUpdate(MediaPlayer mp, int percent) {
-
+    public int getCurrentPosition() {
+        if (isInPlaybackState()) {
+            return mediaPlayer.getCurrentPosition();
         }
+        return 0;
+    }
 
-        @Override
-        public void onCompletion(MediaPlayer mp) {
-
+    public void setSurface(Surface surface) {
+        if (mediaPlayer != null) {
+            mediaPlayer.setSurface(surface);
         }
+    }
 
-        @Override
-        public boolean onError(MediaPlayer mp, int what, int extra) {
-            return false;
+    public int getDuration() {
+        if (isInPlaybackState()) {
+            return mediaPlayer.getDuration();
         }
+        return 0;
+    }
 
-        @Override
-        public boolean onInfo(MediaPlayer mp, int what, int extra) {
-            return false;
-        }
-
-        @Override
-        public void onPrepared(MediaPlayer mp) {
-
+    @Override
+    public void onVideoSizeChanged(MediaPlayer mp, int width, int height) {
+        if (callback != null) {
+            callback.onVideoSizeChanged(mp, width, height);
         }
     }
 }

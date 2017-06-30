@@ -15,7 +15,6 @@ import android.widget.TextView;
 import com.example.administrator.myapplication.R;
 import com.example.administrator.myapplication.scroller.autoviewpager.AutoScrollViewPager;
 import com.example.administrator.myapplication.widget.CircleIndicator;
-import com.umeng.analytics.MobclickAgent;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -35,7 +34,6 @@ public class ViewPagerActivity extends AppCompatActivity {
     protected void onCreate(@Nullable Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_viewpager);
-        MobclickAgent.openActivityDurationTrack(false);
         viewPager = (AutoScrollViewPager) findViewById(R.id.viewpager);
         tabLayout = (TabLayout) findViewById(R.id.tab_layout);
         circleIndicator = (CircleIndicator) findViewById(R.id.circle_indicator);

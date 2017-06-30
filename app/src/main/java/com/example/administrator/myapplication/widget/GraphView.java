@@ -46,7 +46,6 @@ public class GraphView extends LinearLayout {
         // add GraphViewY
         graphViewY = new GraphViewY(getContext());
         addView(graphViewY);
-
         // add GraphViewX
         HorizontalScrollView horizontalScrollView = new HorizontalScrollView(getContext());
         graphViewX = new GraphViewX(getContext());

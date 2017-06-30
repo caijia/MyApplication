@@ -24,7 +24,7 @@
         android:icon="@mipmap/ic_launcher"
         android:label="@string/app_name"
         android:supportsRtl="true"
-        android:theme="@style/AppTheme"
+        android:theme="@style/AppTheme.NoActionBar"
         android:name=".MyApplication">
         <activity android:name=".MainActivity">
 
@@ -94,7 +94,9 @@
 
         </activity>
 
-        <activity android:name=".textureview.PlayVideoActivity" >
+        <activity android:name=".textureview.PlayVideoActivity"
+            android:hardwareAccelerated="true"
+            android:configChanges="orientation|keyboardHidden|screenSize">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
 
@@ -115,6 +117,10 @@
         </activity>
 
         <activity android:name=".recyclerview.TabLayoutActivity">
+
+        </activity>
+
+        <activity android:name=".pic.SelectPictureActivity">
 
         </activity>
 
