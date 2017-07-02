@@ -2,7 +2,6 @@ package com.example.administrator.myapplication.textureview;
 
 import android.annotation.TargetApi;
 import android.content.Context;
-import android.graphics.Matrix;
 import android.graphics.SurfaceTexture;
 import android.media.MediaPlayer;
 import android.os.Build;
@@ -11,8 +10,13 @@ import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
 import android.support.annotation.StyleRes;
 import android.util.AttributeSet;
+import android.view.MotionEvent;
 import android.view.Surface;
 import android.view.TextureView;
+import android.view.ViewConfiguration;
+
+import static android.media.MediaPlayer.MEDIA_INFO_BUFFERING_END;
+import static android.media.MediaPlayer.MEDIA_INFO_BUFFERING_START;
 
 /**
  * Created by cai.jia on 2017/6/30 0030
@@ -21,10 +25,28 @@ import android.view.TextureView;
 public class VideoView extends TextureView implements TextureView.SurfaceTextureListener,
         OnPlayMediaListener {
 
+    private static final int NONE = 0;
+    private static final int HORIZONTAL = 1;
+    private static final int VERTICAL_LEFT = 2;
+    private static final int VERTICAL_RIGHT = 3;
+
+    private static final int WRAP_CONTENT = 1;
+    private static final int CENTER_CROP = 2;
+
     private MediaPlayerHelper playerHelper;
     private int videoWidth;
     private int videoHeight;
     private Surface surface;
+    private int touchSlop;
+    private OnPlayMediaListener callback;
+
+    private float initialX;
+    private float initialY;
+    private float startX;
+    private float startY;
+    private int orientation = NONE;
+    private Controller controller;
+    private int scaleType = WRAP_CONTENT;
 
     public VideoView(@NonNull Context context) {
         this(context, null);
@@ -37,17 +59,19 @@ public class VideoView extends TextureView implements TextureView.SurfaceTexture
     public VideoView(@NonNull Context context, @Nullable AttributeSet attrs,
                      @AttrRes int defStyleAttr) {
         super(context, attrs, defStyleAttr);
-        init();
+        init(context);
     }
 
     @TargetApi(Build.VERSION_CODES.LOLLIPOP)
     public VideoView(@NonNull Context context, @Nullable AttributeSet attrs,
                      @AttrRes int defStyleAttr, @StyleRes int defStyleRes) {
         super(context, attrs, defStyleAttr, defStyleRes);
-        init();
+        init(context);
     }
 
-    private void init() {
+    private void init(Context context) {
+        ViewConfiguration config = ViewConfiguration.get(context);
+        touchSlop = config.getScaledTouchSlop();
         playerHelper = new MediaPlayerHelper();
         setSurfaceTextureListener(this);
     }
@@ -66,7 +90,7 @@ public class VideoView extends TextureView implements TextureView.SurfaceTexture
 
     @Override
     public void onSurfaceTextureSizeChanged(SurfaceTexture surface, int width, int height) {
-        adjustAspectRatio(videoWidth, videoHeight);
+        setVideoScaleType();
     }
 
     @Override
@@ -92,11 +116,19 @@ public class VideoView extends TextureView implements TextureView.SurfaceTexture
         if (playerHelper != null) {
             playerHelper.prepareAsync();
         }
+
+        if (controller != null) {
+            controller.onPreparing();
+        }
     }
 
     public void start() {
         if (playerHelper != null) {
             playerHelper.start();
+        }
+
+        if (controller != null) {
+            controller.onStart();
         }
     }
 
@@ -115,6 +147,10 @@ public class VideoView extends TextureView implements TextureView.SurfaceTexture
     public void pause() {
         if (playerHelper != null) {
             playerHelper.pause();
+        }
+
+        if (controller != null) {
+            controller.onPause();
         }
     }
 
@@ -136,8 +172,6 @@ public class VideoView extends TextureView implements TextureView.SurfaceTexture
         }
     }
 
-    private OnPlayMediaListener callback;
-
     public void setOnPlayMediaListener(OnPlayMediaListener callback) {
         this.callback = callback;
     }
@@ -154,12 +188,20 @@ public class VideoView extends TextureView implements TextureView.SurfaceTexture
         if (callback != null) {
             callback.onCompletion(mp);
         }
+
+        if (controller != null) {
+            controller.onCompletion();
+        }
     }
 
     @Override
     public boolean onError(MediaPlayer mp, int what, int extra) {
         if (callback != null) {
-            callback.onError(mp,what,extra);
+            callback.onError(mp, what, extra);
+        }
+
+        if (controller != null) {
+            controller.onError();
         }
         return true;
     }
@@ -167,7 +209,23 @@ public class VideoView extends TextureView implements TextureView.SurfaceTexture
     @Override
     public boolean onInfo(MediaPlayer mp, int what, int extra) {
         if (callback != null) {
-            callback.onInfo(mp,what,extra);
+            callback.onInfo(mp, what, extra);
+        }
+
+        switch (what) {
+            case MEDIA_INFO_BUFFERING_START: {
+                if (controller != null) {
+                    controller.onBufferStart(extra);
+                }
+                break;
+            }
+
+            case MEDIA_INFO_BUFFERING_END: {
+                if (controller != null) {
+                    controller.onBufferEnd(extra);
+                }
+                break;
+            }
         }
         return false;
     }
@@ -184,39 +242,135 @@ public class VideoView extends TextureView implements TextureView.SurfaceTexture
     public void onVideoSizeChanged(MediaPlayer mp, int width, int height) {
         videoWidth = width;
         videoHeight = height;
-        adjustAspectRatio(videoWidth, videoHeight);
+        setVideoScaleType();
         if (callback != null) {
-            callback.onVideoSizeChanged(mp,width,height);
+            callback.onVideoSizeChanged(mp, width, height);
+        }
+    }
+
+    private void setVideoScaleType() {
+        switch (scaleType) {
+            case CENTER_CROP: {
+                TextureTransformHelper.centerCrop(this, videoWidth, videoHeight);
+                break;
+            }
+
+            case WRAP_CONTENT: {
+                TextureTransformHelper.wrapContent(this, videoWidth, videoHeight);
+                break;
+            }
         }
     }
 
     @Override
     public void onPlayMediaProgress(long duration, long currentPosition) {
         if (callback != null) {
-            callback.onPlayMediaProgress(duration,currentPosition);
+            callback.onPlayMediaProgress(duration, currentPosition);
         }
     }
 
-    private void adjustAspectRatio(int videoWidth, int videoHeight) {
-        int viewWidth = getWidth();
-        int viewHeight = getHeight();
-        double aspectRatio = (double) videoHeight / videoWidth;
+    @Override
+    public boolean onTouchEvent(MotionEvent event) {
+        float x = event.getX();
+        float y = event.getY();
+        switch (event.getActionMasked()) {
+            case MotionEvent.ACTION_DOWN: {
+                initialX = x;
+                initialY = y;
+                startX = x;
+                startY = y;
+                break;
+            }
 
-        int newWidth, newHeight;
-        if (viewHeight > (int) (viewWidth * aspectRatio)) {
-            newWidth = viewWidth;
-            newHeight = (int) (viewWidth * aspectRatio);
+            case MotionEvent.ACTION_MOVE: {
+                float deltaX = x - startX;
+                float deltaY = y - startY;
 
-        } else {
-            newWidth = (int) (viewHeight / aspectRatio);
-            newHeight = viewHeight;
+                float distanceX = x - initialX;
+                float distanceY = y - initialY;
+
+                if (orientation == NONE && Math.abs(distanceX) > Math.abs(distanceY)
+                        && Math.abs(distanceX) > touchSlop) {
+                    orientation = HORIZONTAL;
+                }
+
+                if (orientation == NONE && Math.abs(distanceY) > Math.abs(distanceX)
+                        && Math.abs(distanceY) > touchSlop) {
+                    boolean left = x < getWidth() / 2;
+                    orientation = left ? VERTICAL_LEFT : VERTICAL_RIGHT;
+                }
+
+                startX = x;
+                startY = y;
+
+                if (orientation == NONE || controller == null) {
+                    return false;
+                }
+                switch (orientation) {
+                    case HORIZONTAL: {
+                        controller.onHorizontalMove(deltaX);
+                        break;
+                    }
+
+                    case VERTICAL_LEFT: {
+                        controller.onLeftVerticalMove(deltaY);
+                        break;
+                    }
+
+                    case VERTICAL_RIGHT: {
+                        controller.onRightVerticalMove(deltaY);
+                        break;
+                    }
+                }
+                break;
+            }
+
+            case MotionEvent.ACTION_UP: {
+                initialX = 0;
+                initialY = 0;
+                startX = 0;
+                startY = 0;
+                orientation = NONE;
+                break;
+            }
         }
-        int xOffset = (viewWidth - newWidth) / 2;
-        int yOffset = (viewHeight - newHeight) / 2;
+        return true;
+    }
 
-        Matrix transform = new Matrix();
-        transform.setScale((float) newWidth / viewWidth, (float) newHeight / viewHeight);
-        transform.postTranslate(xOffset, yOffset);
-        setTransform(transform);
+    public void setPlayController(Controller controller) {
+        this.controller = controller;
+        if (controller != null) {
+            controller.onAttach(this);
+        }
+    }
+
+    public void setScaleType(int scaleType) {
+        this.scaleType = scaleType;
+    }
+
+    public interface Controller {
+
+        void onAttach(VideoView view);
+
+        void onLeftVerticalMove(float distance);
+
+        void onRightVerticalMove(float distance);
+
+        void onHorizontalMove(float distance);
+
+        void onPreparing();
+
+        void onStart();
+
+        void onPause();
+
+        void onCompletion();
+
+        void onError();
+
+        void onBufferStart(int speed);
+
+        void onBufferEnd(int speed);
+
     }
 }

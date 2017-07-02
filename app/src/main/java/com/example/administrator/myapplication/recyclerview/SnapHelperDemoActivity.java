@@ -43,11 +43,11 @@ public class SnapHelperDemoActivity extends AppCompatActivity implements PageCha
 
         snapHelper = new PageChangeSnapHelper();
         LooperRecyclerViewHelper looperHelper = new LooperRecyclerViewHelper(2000);
-        snapHelper.attachToRecyclerView(recyclerView);
+//        snapHelper.attachToRecyclerView(recyclerView);
         recyclerView.setAdapter(mAdapter);
-        looperHelper.attachToRecyclerView(recyclerView);
+//        looperHelper.attachToRecyclerView(recyclerView);
 //        recyclerView.scrollToPosition(4 * 500);
-        indicator.setSnapHelper(4, layoutManager, snapHelper);
+//        indicator.setSnapHelper(4, layoutManager, snapHelper);
         snapHelper.addOnPageChangeListener(this);
     }
 

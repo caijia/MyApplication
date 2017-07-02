@@ -228,6 +228,5 @@ public class AutoScrollViewPager extends ViewPager {
         public boolean isPageScroll() {
             return positionOffsetPixels > 0;
         }
-
     }
 }

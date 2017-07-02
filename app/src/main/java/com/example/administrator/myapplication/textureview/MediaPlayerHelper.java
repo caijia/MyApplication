@@ -49,7 +49,6 @@ public class MediaPlayerHelper implements MediaPlayer.OnPreparedListener,
                 progressHelper = new MediaProgressHelper(this);
             }
             progressHelper.setOnPlayMediaProgressListener(this);
-            System.out.println("setDataSource");
             mediaPlayer.setDataSource(url);
             if (surface != null) {
                 mediaPlayer.setSurface(surface);
@@ -184,7 +183,6 @@ public class MediaPlayerHelper implements MediaPlayer.OnPreparedListener,
     @Override
     public void onCompletion(MediaPlayer mp) {
         currentState = STATE_PLAYBACK_COMPLETED;
-        seekTo(0);
         if (callback != null) {
             callback.onCompletion(mp);
             int duration = mediaPlayer.getDuration();
