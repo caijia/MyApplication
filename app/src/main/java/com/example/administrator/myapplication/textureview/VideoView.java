@@ -3,20 +3,19 @@ package com.example.administrator.myapplication.textureview;
 import android.annotation.TargetApi;
 import android.content.Context;
 import android.graphics.SurfaceTexture;
-import android.media.MediaPlayer;
 import android.os.Build;
 import android.support.annotation.AttrRes;
 import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
 import android.support.annotation.StyleRes;
 import android.util.AttributeSet;
+import android.util.Log;
 import android.view.MotionEvent;
 import android.view.Surface;
 import android.view.TextureView;
 import android.view.ViewConfiguration;
 
-import static android.media.MediaPlayer.MEDIA_INFO_BUFFERING_END;
-import static android.media.MediaPlayer.MEDIA_INFO_BUFFERING_START;
+import tv.danmaku.ijk.media.player.IMediaPlayer;
 
 /**
  * Created by cai.jia on 2017/6/30 0030
@@ -85,7 +84,6 @@ public class VideoView extends TextureView implements TextureView.SurfaceTexture
         } else {
             surface = new Surface(surfaceTexture);
             setSurface(surface);
-            resume();
         }
     }
 
@@ -96,7 +94,6 @@ public class VideoView extends TextureView implements TextureView.SurfaceTexture
 
     @Override
     public boolean onSurfaceTextureDestroyed(SurfaceTexture surface) {
-        pause();
         return true;
     }
 
@@ -175,14 +172,14 @@ public class VideoView extends TextureView implements TextureView.SurfaceTexture
     }
 
     @Override
-    public void onBufferingUpdate(MediaPlayer mp, int percent) {
+    public void onBufferingUpdate(IMediaPlayer mp, int percent) {
         if (callback != null) {
             callback.onBufferingUpdate(mp, percent);
         }
     }
 
     @Override
-    public void onCompletion(MediaPlayer mp) {
+    public void onCompletion(IMediaPlayer mp) {
         if (callback != null) {
             callback.onCompletion(mp);
         }
@@ -193,7 +190,7 @@ public class VideoView extends TextureView implements TextureView.SurfaceTexture
     }
 
     @Override
-    public boolean onError(MediaPlayer mp, int what, int extra) {
+    public boolean onError(IMediaPlayer mp, int what, int extra) {
         if (callback != null) {
             callback.onError(mp, what, extra);
         }
@@ -205,31 +202,39 @@ public class VideoView extends TextureView implements TextureView.SurfaceTexture
     }
 
     @Override
-    public boolean onInfo(MediaPlayer mp, int what, int extra) {
+    public boolean onInfo(IMediaPlayer mp, int what, int extra) {
         if (callback != null) {
             callback.onInfo(mp, what, extra);
         }
 
         switch (what) {
-            case MEDIA_INFO_BUFFERING_START: {
+            case IMediaPlayer.MEDIA_INFO_BUFFERING_START: {
                 if (controller != null) {
                     controller.onBufferStart(extra);
                 }
                 break;
             }
 
-            case MEDIA_INFO_BUFFERING_END: {
+            case IMediaPlayer.MEDIA_INFO_BUFFERING_END: {
                 if (controller != null) {
                     controller.onBufferEnd(extra);
                 }
+                break;
+            }
+
+            case IMediaPlayer.MEDIA_INFO_VIDEO_ROTATION_CHANGED:{
+                rotation = extra;
+                Log.d("controller", "rotation:" + rotation);
                 break;
             }
         }
         return false;
     }
 
+    private int rotation;
+
     @Override
-    public void onPrepared(MediaPlayer mp) {
+    public void onPrepared(IMediaPlayer mp) {
         if (callback != null) {
             callback.onPrepared(mp);
         }
@@ -240,7 +245,7 @@ public class VideoView extends TextureView implements TextureView.SurfaceTexture
     }
 
     @Override
-    public void onVideoSizeChanged(MediaPlayer mp, int width, int height) {
+    public void onVideoSizeChanged(IMediaPlayer mp, int width, int height) {
         videoWidth = width;
         videoHeight = height;
         setVideoScaleType();
@@ -250,6 +255,13 @@ public class VideoView extends TextureView implements TextureView.SurfaceTexture
     }
 
     private void setVideoScaleType() {
+        if (rotation == 90 || rotation == 270) {
+            int temp = this.videoWidth;
+            this.videoWidth = this.videoHeight;
+            this.videoHeight = temp;
+            setRotation(rotation);
+        }
+
         switch (scaleType) {
             case CENTER_CROP: {
                 TextureTransformHelper.centerCrop(this, videoWidth, videoHeight);

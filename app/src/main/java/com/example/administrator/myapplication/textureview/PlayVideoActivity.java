@@ -5,7 +5,7 @@ import android.os.Bundle;
 
 import com.example.administrator.myapplication.R;
 
-public class PlayVideoActivity extends Activity {
+public class PlayVideoActivity extends Activity  {
 //    private String url = "http://baobab.wdjcdn.com/14564977406580.mp4";
     private String url = "http://jetsunfile.cn-gd.ufileos.com/upload_29048693_868026024793198_1498553210";
 

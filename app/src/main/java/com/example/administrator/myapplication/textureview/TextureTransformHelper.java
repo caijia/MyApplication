@@ -27,7 +27,7 @@ public class TextureTransformHelper {
         int yOffset = (viewHeight - newHeight) / 2;
 
         Matrix transform = new Matrix();
-        transform.setScale((float) newWidth / viewWidth, (float) newHeight / viewHeight);
+        transform.postScale((float) newWidth / viewWidth, (float) newHeight / viewHeight);
         transform.postTranslate(xOffset, yOffset);
         textureView.setTransform(transform);
     }
@@ -50,7 +50,7 @@ public class TextureTransformHelper {
         int xOffset = (viewWidth - newWidth) / 2;
         int yOffset = (viewHeight - newHeight) / 2;
         Matrix transform = new Matrix();
-        transform.setScale((float) newWidth / viewWidth, (float) newHeight / viewHeight);
+        transform.postScale((float) newWidth / viewWidth, (float) newHeight / viewHeight);
         transform.postTranslate(xOffset, yOffset);
         textureView.setTransform(transform);
     }

@@ -77,8 +77,8 @@ public class MediaProgressHelper implements Runnable {
                 MediaProgressHelper progressHelper = ref.get();
                 if (progressHelper != null && progressHelper.playerHelper != null) {
                     MediaPlayerHelper playerHelper = progressHelper.playerHelper;
-                    int currentPosition = playerHelper.getCurrentPosition();
-                    int duration = playerHelper.getDuration();
+                    long currentPosition = playerHelper.getCurrentPosition();
+                    long duration = playerHelper.getDuration();
                     progressHelper.onPlayMediaProgress(duration, currentPosition);
                 }
             }
