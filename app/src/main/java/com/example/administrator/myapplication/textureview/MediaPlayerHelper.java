@@ -1,20 +1,25 @@
 package com.example.administrator.myapplication.textureview;
 
-import android.media.MediaPlayer;
 import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
+import android.util.Log;
 import android.view.Surface;
 
 import java.io.IOException;
+
+import tv.danmaku.ijk.media.player.IMediaPlayer;
+import tv.danmaku.ijk.media.player.IjkMediaPlayer;
+
+import static tv.danmaku.ijk.media.player.IMediaPlayer.MEDIA_ERROR_UNKNOWN;
 
 /**
  * Created by cai.jia on 2017/6/2 0002
  */
 
-public class MediaPlayerHelper implements MediaPlayer.OnPreparedListener,
-        MediaPlayer.OnCompletionListener, MediaPlayer.OnErrorListener,
-        MediaPlayer.OnBufferingUpdateListener, MediaPlayer.OnInfoListener,
-        MediaProgressHelper.OnPlayMediaProgressListener, MediaPlayer.OnVideoSizeChangedListener {
+public class MediaPlayerHelper implements IjkMediaPlayer.OnPreparedListener,
+        IjkMediaPlayer.OnCompletionListener, IjkMediaPlayer.OnErrorListener,
+        IjkMediaPlayer.OnBufferingUpdateListener, IjkMediaPlayer.OnInfoListener,
+        MediaProgressHelper.OnPlayMediaProgressListener, IjkMediaPlayer.OnVideoSizeChangedListener {
 
     private static final int STATE_ERROR = -1;
     private static final int STATE_IDLE = 0;
@@ -24,7 +29,7 @@ public class MediaPlayerHelper implements MediaPlayer.OnPreparedListener,
     private static final int STATE_PAUSED = 4;
     private static final int STATE_PLAYBACK_COMPLETED = 5;
 
-    private MediaPlayer mediaPlayer;
+    private IMediaPlayer mediaPlayer;
     private OnPlayMediaListener callback;
     private MediaProgressHelper progressHelper;
 
@@ -42,7 +47,7 @@ public class MediaPlayerHelper implements MediaPlayer.OnPreparedListener,
         try {
             release();
             if (mediaPlayer == null) {
-                mediaPlayer = new MediaPlayer();
+                mediaPlayer = new IjkMediaPlayer();
             }
 
             if (progressHelper == null) {
@@ -65,7 +70,7 @@ public class MediaPlayerHelper implements MediaPlayer.OnPreparedListener,
             e.printStackTrace();
             currentState = STATE_ERROR;
             if (callback != null) {
-                callback.onError(mediaPlayer, MediaPlayer.MEDIA_ERROR_UNKNOWN, -1);
+                callback.onError(mediaPlayer, MEDIA_ERROR_UNKNOWN, -1);
             }
         }
     }
@@ -74,14 +79,14 @@ public class MediaPlayerHelper implements MediaPlayer.OnPreparedListener,
         try {
             if (mediaPlayer != null) {
                 mediaPlayer.prepareAsync();
-                currentState = STATE_PREPARED;
+                currentState = STATE_PREPARING;
             }
 
         } catch (Exception e) {
             e.printStackTrace();
             currentState = STATE_ERROR;
             if (callback != null) {
-                callback.onError(mediaPlayer, MediaPlayer.MEDIA_ERROR_UNKNOWN, -1);
+                callback.onError(mediaPlayer, MEDIA_ERROR_UNKNOWN, -1);
             }
         }
     }
@@ -90,6 +95,7 @@ public class MediaPlayerHelper implements MediaPlayer.OnPreparedListener,
         callback = null;
         if (mediaPlayer != null) {
             mediaPlayer.stop();
+            mediaPlayer.reset();
             mediaPlayer.release();
             mediaPlayer = null;
             currentState = STATE_IDLE;
@@ -114,6 +120,21 @@ public class MediaPlayerHelper implements MediaPlayer.OnPreparedListener,
         if (progressHelper != null) {
             progressHelper.start();
         }
+    }
+
+    public boolean start(String url,Surface surface) {
+        if (isInPlaybackState()) {
+            start();
+            Log.d("controller", "start:notURl");
+            return false;
+
+        }else if (currentState == STATE_ERROR || currentState == STATE_IDLE){
+            setDataSource(url,surface);
+            Log.d("controller", "start:setDataSource");
+            prepareAsync();
+            return true;
+        }
+        return false;
     }
 
     public void start() {
@@ -145,15 +166,15 @@ public class MediaPlayerHelper implements MediaPlayer.OnPreparedListener,
         }
     }
 
-    public void seekTo(int currentPosition) {
+    public void seekTo(long currentPosition) {
         if (isInPlaybackState()) {
             mediaPlayer.seekTo(currentPosition);
         }
     }
 
-    public void relativeSeekTo(int msec) {
+    public void relativeSeekTo(int milliSeconds) {
         if (isInPlaybackState()) {
-            seekTo(mediaPlayer.getCurrentPosition() + msec);
+            seekTo(mediaPlayer.getCurrentPosition() + milliSeconds);
         }
     }
 
@@ -166,26 +187,27 @@ public class MediaPlayerHelper implements MediaPlayer.OnPreparedListener,
 
     public void release() {
         if (mediaPlayer != null) {
+            mediaPlayer.stop();
             mediaPlayer.reset();
             mediaPlayer.release();
             mediaPlayer = null;
+            currentState = STATE_IDLE;
         }
     }
 
     @Override
-    public void onPrepared(MediaPlayer mp) {
-        currentState = STATE_PREPARED;
+    public void onBufferingUpdate(IMediaPlayer mp, int percent) {
         if (callback != null) {
-            callback.onPrepared(mp);
+            callback.onBufferingUpdate(mp, percent);
         }
     }
 
     @Override
-    public void onCompletion(MediaPlayer mp) {
+    public void onCompletion(IMediaPlayer mp) {
         currentState = STATE_PLAYBACK_COMPLETED;
         if (callback != null) {
             callback.onCompletion(mp);
-            int duration = mediaPlayer.getDuration();
+            long duration = mediaPlayer.getDuration();
             callback.onPlayMediaProgress(duration, duration);
         }
 
@@ -195,8 +217,10 @@ public class MediaPlayerHelper implements MediaPlayer.OnPreparedListener,
     }
 
     @Override
-    public boolean onError(MediaPlayer mp, int what, int extra) {
+    public boolean onError(IMediaPlayer mp, int what, int extra) {
+        release();
         currentState = STATE_ERROR;
+
         if (progressHelper != null) {
             progressHelper.stop();
         }
@@ -209,18 +233,27 @@ public class MediaPlayerHelper implements MediaPlayer.OnPreparedListener,
     }
 
     @Override
-    public void onBufferingUpdate(MediaPlayer mp, int percent) {
-        if (callback != null) {
-            callback.onBufferingUpdate(mp, percent);
-        }
-    }
-
-    @Override
-    public boolean onInfo(MediaPlayer mp, int what, int extra) {
+    public boolean onInfo(IMediaPlayer mp, int what, int extra) {
         if (callback != null) {
             return callback.onInfo(mp, what, extra);
         }
         return false;
+    }
+
+    @Override
+    public void onPrepared(IMediaPlayer mp) {
+        currentState = STATE_PREPARED;
+        if (callback != null) {
+            callback.onPrepared(mp);
+        }
+    }
+
+    @Override
+    public void onVideoSizeChanged(IMediaPlayer mp, int width, int height, int i2, int i3) {
+        if (callback != null) {
+            Log.d("controller", "width:" + width + "--height:" + height+"i2:"+i2+"--i3:"+i3);
+            callback.onVideoSizeChanged(mp, width, height);
+        }
     }
 
     @Override
@@ -230,7 +263,7 @@ public class MediaPlayerHelper implements MediaPlayer.OnPreparedListener,
         }
     }
 
-    public int getCurrentPosition() {
+    public long getCurrentPosition() {
         if (isInPlaybackState()) {
             return mediaPlayer.getCurrentPosition();
         }
@@ -243,17 +276,10 @@ public class MediaPlayerHelper implements MediaPlayer.OnPreparedListener,
         }
     }
 
-    public int getDuration() {
+    public long getDuration() {
         if (isInPlaybackState()) {
             return mediaPlayer.getDuration();
         }
         return 0;
-    }
-
-    @Override
-    public void onVideoSizeChanged(MediaPlayer mp, int width, int height) {
-        if (callback != null) {
-            callback.onVideoSizeChanged(mp, width, height);
-        }
     }
 }

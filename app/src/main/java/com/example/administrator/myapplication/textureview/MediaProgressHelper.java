@@ -29,7 +29,7 @@ public class MediaProgressHelper implements Runnable {
         handler.removeCallbacks(this);
         handler.sendMessage(handler.obtainMessage(MSG_GET_PLAY_DURATION));
         handler.postDelayed(this, 1000);
-        System.out.println("MediaProgressHelper:start");
+        System.out.println("MediaProgressHelper:video_start");
     }
 
     public void stop() {
@@ -77,8 +77,8 @@ public class MediaProgressHelper implements Runnable {
                 MediaProgressHelper progressHelper = ref.get();
                 if (progressHelper != null && progressHelper.playerHelper != null) {
                     MediaPlayerHelper playerHelper = progressHelper.playerHelper;
-                    int currentPosition = playerHelper.getCurrentPosition();
-                    int duration = playerHelper.getDuration();
+                    long currentPosition = playerHelper.getCurrentPosition();
+                    long duration = playerHelper.getDuration();
                     progressHelper.onPlayMediaProgress(duration, currentPosition);
                 }
             }
