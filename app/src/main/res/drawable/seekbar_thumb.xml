@@ -3,7 +3,7 @@
     <item android:state_pressed="true">
         <shape
             android:shape="oval">
-            <size android:width="12" android:height="12" />
+            <size android:width="12dp" android:height="12dp" />
             <solid android:color="@android:color/white" />
         </shape>
     </item>
@@ -11,7 +11,7 @@
     <item android:state_focused="true">
         <shape
             android:shape="oval">
-            <size android:width="12" android:height="12" />
+            <size android:width="12dp" android:height="12dp" />
             <solid android:color="@android:color/white" />
         </shape>
     </item>
@@ -19,7 +19,7 @@
     <item>
         <shape
             android:shape="oval">
-            <size android:width="12" android:height="12" />
+            <size android:width="12dp" android:height="12dp" />
             <solid android:color="@android:color/white" />
         </shape>
     </item>

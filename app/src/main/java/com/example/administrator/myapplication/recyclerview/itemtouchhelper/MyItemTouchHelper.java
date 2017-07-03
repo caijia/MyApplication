@@ -100,7 +100,7 @@ public class MyItemTouchHelper extends RecyclerView.ItemDecoration
     // If you change these relative direction values, update Callback#convertToAbsoluteDirection,
     // Callback#convertToRelativeDirection.
     /**
-     * Horizontal start direction. Resolved to LEFT or RIGHT depending on RecyclerView's layout
+     * Horizontal video_start direction. Resolved to LEFT or RIGHT depending on RecyclerView's layout
      * direction. Used for swipe & drag control.
      */
     public static final int START = LEFT << 2;
@@ -180,7 +180,7 @@ public class MyItemTouchHelper extends RecyclerView.ItemDecoration
     ViewHolder mSelected = null;
 
     /**
-     * The reference coordinates for the action start. For drag & drop, this is the time long
+     * The reference coordinates for the action video_start. For drag & drop, this is the time long
      * press is completed vs for swipe, this is the initial touch point.
      */
     float mInitialTouchX;
@@ -249,7 +249,7 @@ public class MyItemTouchHelper extends RecyclerView.ItemDecoration
     RecyclerView mRecyclerView;
 
     /**
-     * When user drags a view to the edge, we start scrolling the LayoutManager as long as View
+     * When user drags a view to the edge, we video_start scrolling the LayoutManager as long as View
      * is partially out of bounds.
      */
     final Runnable mScrollRunnable = new Runnable() {
@@ -561,7 +561,7 @@ public class MyItemTouchHelper extends RecyclerView.ItemDecoration
         mActionState = actionState;
         if (actionState == ACTION_STATE_DRAG) {
             // we remove after animation is complete. this means we only elevate the last drag
-            // child but that should perform good enough as it is very hard to start dragging a
+            // child but that should perform good enough as it is very hard to video_start dragging a
             // new child before the previous one settles.
             mOverdrawChild = selected.itemView;
             addChildDrawingOrderCallback();
@@ -1056,7 +1056,7 @@ public class MyItemTouchHelper extends RecyclerView.ItemDecoration
      * </pre>
      * <p>
      *
-     * @param viewHolder The ViewHolder to start dragging. It must be a direct child of
+     * @param viewHolder The ViewHolder to video_start dragging. It must be a direct child of
      *                   RecyclerView.
      * @see MyItemTouchHelper.Callback#isItemViewSwipeEnabled()
      */
@@ -1104,7 +1104,7 @@ public class MyItemTouchHelper extends RecyclerView.ItemDecoration
      *     });
      * </pre>
      *
-     * @param viewHolder The ViewHolder to start swiping. It must be a direct child of
+     * @param viewHolder The ViewHolder to video_start swiping. It must be a direct child of
      *                   RecyclerView.
      */
     public void startSwipe(ViewHolder viewHolder) {
@@ -1552,7 +1552,7 @@ public class MyItemTouchHelper extends RecyclerView.ItemDecoration
             if (masked == 0) {
                 return flags;// does not have any relative flags, good.
             }
-            flags &= ~masked; //remove start / end
+            flags &= ~masked; //remove video_start / end
             if (layoutDirection == ViewCompat.LAYOUT_DIRECTION_LTR) {
                 // no change. just OR with 2 bits shifted mask and return
                 flags |= masked >> 2; // START is 2 bits after LEFT, END is 2 bits after RIGHT.
@@ -1560,7 +1560,7 @@ public class MyItemTouchHelper extends RecyclerView.ItemDecoration
             } else {
                 // add START flag as RIGHT
                 flags |= ((masked >> 1) & ~RELATIVE_DIR_FLAGS);
-                // first clean start bit then add END flag as LEFT
+                // first clean video_start bit then add END flag as LEFT
                 flags |= ((masked >> 1) & RELATIVE_DIR_FLAGS) >> 2;
             }
             return flags;
@@ -1626,13 +1626,13 @@ public class MyItemTouchHelper extends RecyclerView.ItemDecoration
                 ViewHolder viewHolder, ViewHolder target);
 
         /**
-         * Returns whether MyItemTouchHelper should start a drag and drop operation if an item is
+         * Returns whether MyItemTouchHelper should video_start a drag and drop operation if an item is
          * long pressed.
          * <p>
-         * Default value returns true but you may want to disable this if you want to start
+         * Default value returns true but you may want to disable this if you want to video_start
          * dragging on a custom view touch using {@link #startDrag(ViewHolder)}.
          *
-         * @return True if MyItemTouchHelper should start dragging an item when it is long pressed,
+         * @return True if MyItemTouchHelper should video_start dragging an item when it is long pressed,
          * false otherwise. Default value is <code>true</code>.
          * @see #startDrag(ViewHolder)
          */
@@ -1641,13 +1641,13 @@ public class MyItemTouchHelper extends RecyclerView.ItemDecoration
         }
 
         /**
-         * Returns whether MyItemTouchHelper should start a swipe operation if a pointer is swiped
+         * Returns whether MyItemTouchHelper should video_start a swipe operation if a pointer is swiped
          * over the View.
          * <p>
-         * Default value returns true but you may want to disable this if you want to start
+         * Default value returns true but you may want to disable this if you want to video_start
          * swiping on a custom view touch using {@link #startSwipe(ViewHolder)}.
          *
-         * @return True if MyItemTouchHelper should start swiping an item when user swipes a pointer
+         * @return True if MyItemTouchHelper should video_start swiping an item when user swipes a pointer
          * over the View, false otherwise. Default value is <code>true</code>.
          * @see #startSwipe(ViewHolder)
          */

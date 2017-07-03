@@ -46,7 +46,7 @@ public class VideoView extends TextureView implements TextureView.SurfaceTexture
     private float startY;
     private int orientation = NONE;
     private Controller controller;
-    private int scaleType = WRAP_CONTENT;
+    private int scaleType = CENTER_CROP;
 
     public VideoView(@NonNull Context context) {
         this(context, null);
@@ -73,6 +73,7 @@ public class VideoView extends TextureView implements TextureView.SurfaceTexture
         ViewConfiguration config = ViewConfiguration.get(context);
         touchSlop = config.getScaledTouchSlop();
         playerHelper = new MediaPlayerHelper();
+        playerHelper.setOnPlayMediaListener(this);
         setSurfaceTextureListener(this);
     }
 
@@ -104,21 +105,18 @@ public class VideoView extends TextureView implements TextureView.SurfaceTexture
 
     }
 
-    public void setVideoUrl(String url) {
+    public void start(String url) {
         if (playerHelper != null) {
-            playerHelper.setOnPlayMediaListener(this);
-            playerHelper.setDataSource(url, surface);
-            prepareAsync();
-        }
-    }
+            boolean isPrepare = playerHelper.start(url, surface);
+            if (controller == null) {
+                return;
+            }
 
-    private void prepareAsync() {
-        if (playerHelper != null) {
-            playerHelper.prepareAsync();
-        }
-
-        if (controller != null) {
-            controller.onPreparing();
+            if (isPrepare) {
+                controller.onPreparing();
+            }else{
+                controller.onStart();
+            }
         }
     }
 
@@ -232,9 +230,12 @@ public class VideoView extends TextureView implements TextureView.SurfaceTexture
 
     @Override
     public void onPrepared(MediaPlayer mp) {
-        start();
         if (callback != null) {
             callback.onPrepared(mp);
+        }
+
+        if (controller != null) {
+            controller.onPrepared();
         }
     }
 
@@ -266,6 +267,10 @@ public class VideoView extends TextureView implements TextureView.SurfaceTexture
     public void onPlayMediaProgress(long duration, long currentPosition) {
         if (callback != null) {
             callback.onPlayMediaProgress(duration, currentPosition);
+        }
+
+        if (controller != null) {
+            controller.onPlayProgress(currentPosition, duration);
         }
     }
 
@@ -360,6 +365,8 @@ public class VideoView extends TextureView implements TextureView.SurfaceTexture
 
         void onPreparing();
 
+        void onPrepared();
+
         void onStart();
 
         void onPause();
@@ -368,9 +375,12 @@ public class VideoView extends TextureView implements TextureView.SurfaceTexture
 
         void onError();
 
+        void onPlayProgress(long progress, long total);
+
         void onBufferStart(int speed);
 
         void onBufferEnd(int speed);
 
+        void setVideoUrl(String url);
     }
 }

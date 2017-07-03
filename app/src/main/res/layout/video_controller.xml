@@ -1,36 +1,54 @@
 <?xml version="1.0" encoding="utf-8"?>
-<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<merge xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:orientation="vertical">
 
+    <FrameLayout
+        android:id="@+id/video_start_pause_fl"
+        android:layout_width="60dp"
+        android:layout_height="60dp"
+        android:background="@drawable/shape_start_pause_bg"
+        android:layout_centerInParent="true">
+
+        <TextView
+            android:id="@+id/video_start_pause_tv"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_gravity="center"
+            android:drawableLeft="@drawable/video_start_pause"/>
+
+    </FrameLayout>
+
     <LinearLayout
+        android:id="@+id/video_bottom_bar_ll"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:background="#30000000"
+        android:background="@drawable/shape_video_bottom_bar_bg"
         android:gravity="center_vertical"
         android:orientation="horizontal"
         android:paddingBottom="8dp"
-        android:paddingTop="8dp">
+        android:paddingTop="8dp"
+        android:layout_alignParentBottom="true">
 
-        <CheckBox
+        <TextView
+            android:id="@+id/video_voice_tv"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_marginLeft="12dp"
             android:layout_marginRight="12dp"
-            android:background="@null"
-            android:button="@null"
             android:drawableLeft="@drawable/ic_video_voice" />
 
         <TextView
+            android:id="@+id/video_current_time_tv"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="00:19"
+            android:text="00:00"
             android:textColor="@android:color/white"
             android:textSize="14sp" />
 
         <SeekBar
-            android:id="@+id/seekBar2"
+            android:id="@+id/video_play_progress_seek_bar"
             android:layout_width="0dp"
             android:layout_height="wrap_content"
             android:layout_marginLeft="8dp"
@@ -40,27 +58,26 @@
             android:minHeight="4dp"
             android:paddingEnd="0dp"
             android:paddingStart="0dp"
-            android:progress="10"
+            android:thumbOffset="0dp"
             android:progressDrawable="@drawable/horizontal_progress_style"
-            android:secondaryProgress="30"
             android:thumb="@drawable/seekbar_thumb" />
 
         <TextView
+            android:id="@+id/video_total_time_tv"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="00:48"
+            android:text="00:00"
             android:textColor="@android:color/white"
             android:textSize="14sp" />
 
-        <CheckBox
+        <TextView
+            android:id="@+id/video_full_screen_tv"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_marginLeft="12dp"
             android:layout_marginRight="12dp"
-            android:background="@null"
-            android:button="@null"
             android:drawableLeft="@drawable/ic_full_screen" />
 
     </LinearLayout>
 
-</LinearLayout>
+</merge>

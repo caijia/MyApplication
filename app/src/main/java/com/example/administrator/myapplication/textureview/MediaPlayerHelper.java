@@ -3,6 +3,7 @@ package com.example.administrator.myapplication.textureview;
 import android.media.MediaPlayer;
 import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
+import android.util.Log;
 import android.view.Surface;
 
 import java.io.IOException;
@@ -113,6 +114,20 @@ public class MediaPlayerHelper implements MediaPlayer.OnPreparedListener,
 
         if (progressHelper != null) {
             progressHelper.start();
+        }
+    }
+
+    public boolean start(String url,Surface surface) {
+        if (isInPlaybackState()) {
+            start();
+            Log.d("controller", "start:notURl");
+            return false;
+
+        }else{
+            setDataSource(url,surface);
+            Log.d("controller", "start:setDataSource");
+            prepareAsync();
+            return true;
         }
     }
 

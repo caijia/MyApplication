@@ -16,7 +16,7 @@ import android.view.View;
  */
 public class RecycleBin {
   /**
-   * Views that were on screen at the start of layout. This array is populated at the start of
+   * Views that were on screen at the video_start of layout. This array is populated at the video_start of
    * layout, and at the end of layout all view in activeViews are moved to scrapViews.
    * Views in activeViews represent a contiguous range of Views, with position of the first
    * view store in mFirstActivePosition.
