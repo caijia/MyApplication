@@ -8,7 +8,6 @@ import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
 import android.support.annotation.StyleRes;
 import android.util.AttributeSet;
-import android.util.Log;
 import android.view.View;
 import android.widget.FrameLayout;
 
@@ -41,7 +40,7 @@ public class PlayVideoView extends FrameLayout {
         init(context, attrs);
     }
 
-    private VideoView.Controller controller;
+    private Controller controller;
     private VideoView videoView;
 
     private void init(Context context, AttributeSet attrs) {
@@ -54,18 +53,23 @@ public class PlayVideoView extends FrameLayout {
 
         controller = new SimpleVideoController(context);
         container.addView((View) controller, p);
+        controller.setParentLayout(this,container);
 
-        videoView.setPlayController(controller);
+        VideoControllerHelper helper = new VideoControllerHelper(controller);
+        helper.attachVideoView(videoView);
     }
 
     public void setVideoUrl(String videoUrl) {
         controller.setVideoUrl(videoUrl);
     }
 
+    public void start(String videoUrl) {
+        videoView.start(videoUrl);
+    }
+
     @Override
     protected void onDetachedFromWindow() {
         if (videoView != null) {
-            Log.d("controller", "destroy");
             videoView.destroy();
         }
         super.onDetachedFromWindow();

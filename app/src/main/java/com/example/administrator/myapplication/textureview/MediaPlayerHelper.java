@@ -2,7 +2,6 @@ package com.example.administrator.myapplication.textureview;
 
 import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
-import android.util.Log;
 import android.view.Surface;
 
 import java.io.IOException;
@@ -80,6 +79,9 @@ public class MediaPlayerHelper implements IjkMediaPlayer.OnPreparedListener,
             if (mediaPlayer != null) {
                 mediaPlayer.prepareAsync();
                 currentState = STATE_PREPARING;
+                if (callback != null) {
+                    callback.onPreparing();
+                }
             }
 
         } catch (Exception e) {
@@ -122,19 +124,17 @@ public class MediaPlayerHelper implements IjkMediaPlayer.OnPreparedListener,
         }
     }
 
-    public boolean start(String url,Surface surface) {
+    public void start(String url,Surface surface) {
         if (isInPlaybackState()) {
             start();
-            Log.d("controller", "start:notURl");
-            return false;
+            if (callback != null) {
+                callback.onStart();
+            }
 
         }else if (currentState == STATE_ERROR || currentState == STATE_IDLE){
             setDataSource(url,surface);
-            Log.d("controller", "start:setDataSource");
             prepareAsync();
-            return true;
         }
-        return false;
     }
 
     public void start() {
@@ -158,6 +158,9 @@ public class MediaPlayerHelper implements IjkMediaPlayer.OnPreparedListener,
             if (mediaPlayer.isPlaying()) {
                 mediaPlayer.pause();
                 currentState = STATE_PAUSED;
+                if (callback != null) {
+                    callback.onPause();
+                }
             }
         }
 
@@ -251,7 +254,6 @@ public class MediaPlayerHelper implements IjkMediaPlayer.OnPreparedListener,
     @Override
     public void onVideoSizeChanged(IMediaPlayer mp, int width, int height, int i2, int i3) {
         if (callback != null) {
-            Log.d("controller", "width:" + width + "--height:" + height+"i2:"+i2+"--i3:"+i3);
             callback.onVideoSizeChanged(mp, width, height);
         }
     }

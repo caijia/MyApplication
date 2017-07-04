@@ -9,11 +9,8 @@ import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
 import android.support.annotation.StyleRes;
 import android.util.AttributeSet;
-import android.util.Log;
-import android.view.MotionEvent;
 import android.view.Surface;
 import android.view.TextureView;
-import android.view.ViewConfiguration;
 
 import tv.danmaku.ijk.media.player.IMediaPlayer;
 
@@ -24,11 +21,6 @@ import tv.danmaku.ijk.media.player.IMediaPlayer;
 public class VideoView extends TextureView implements TextureView.SurfaceTextureListener,
         OnPlayMediaListener {
 
-    private static final int NONE = 0;
-    private static final int HORIZONTAL = 1;
-    private static final int VERTICAL_LEFT = 2;
-    private static final int VERTICAL_RIGHT = 3;
-
     private static final int WRAP_CONTENT = 1;
     private static final int CENTER_CROP = 2;
 
@@ -36,16 +28,10 @@ public class VideoView extends TextureView implements TextureView.SurfaceTexture
     private int videoWidth;
     private int videoHeight;
     private Surface surface;
-    private int touchSlop;
     private OnPlayMediaListener callback;
 
-    private float initialX;
-    private float initialY;
-    private float startX;
-    private float startY;
-    private int orientation = NONE;
-    private Controller controller;
     private int scaleType = CENTER_CROP;
+    private int rotation;
 
     public VideoView(@NonNull Context context) {
         this(context, null);
@@ -69,8 +55,6 @@ public class VideoView extends TextureView implements TextureView.SurfaceTexture
     }
 
     private void init(Context context) {
-        ViewConfiguration config = ViewConfiguration.get(context);
-        touchSlop = config.getScaledTouchSlop();
         playerHelper = new MediaPlayerHelper();
         playerHelper.setOnPlayMediaListener(this);
         setSurfaceTextureListener(this);
@@ -84,6 +68,7 @@ public class VideoView extends TextureView implements TextureView.SurfaceTexture
         } else {
             surface = new Surface(surfaceTexture);
             setSurface(surface);
+            resume();
         }
     }
 
@@ -94,6 +79,7 @@ public class VideoView extends TextureView implements TextureView.SurfaceTexture
 
     @Override
     public boolean onSurfaceTextureDestroyed(SurfaceTexture surface) {
+        pause();
         return true;
     }
 
@@ -104,30 +90,11 @@ public class VideoView extends TextureView implements TextureView.SurfaceTexture
 
     public void start(String url) {
         if (playerHelper != null) {
-            boolean isPrepare = playerHelper.start(url, surface);
-            if (controller == null) {
-                return;
-            }
-
-            if (isPrepare) {
-                controller.onPreparing();
-            }else{
-                controller.onStart();
-            }
+            playerHelper.start(url, surface);
         }
     }
 
-    public void start() {
-        if (playerHelper != null) {
-            playerHelper.start();
-        }
-
-        if (controller != null) {
-            controller.onStart();
-        }
-    }
-
-    public void resume() {
+    private void resume() {
         if (playerHelper != null) {
             playerHelper.resume();
         }
@@ -142,10 +109,6 @@ public class VideoView extends TextureView implements TextureView.SurfaceTexture
     public void pause() {
         if (playerHelper != null) {
             playerHelper.pause();
-        }
-
-        if (controller != null) {
-            controller.onPause();
         }
     }
 
@@ -183,9 +146,26 @@ public class VideoView extends TextureView implements TextureView.SurfaceTexture
         if (callback != null) {
             callback.onCompletion(mp);
         }
+    }
 
-        if (controller != null) {
-            controller.onCompletion();
+    @Override
+    public void onStart() {
+        if (callback != null) {
+            callback.onStart();
+        }
+    }
+
+    @Override
+    public void onPause() {
+        if (callback != null) {
+            callback.onPause();
+        }
+    }
+
+    @Override
+    public void onPreparing() {
+        if (callback != null) {
+            callback.onPreparing();
         }
     }
 
@@ -193,10 +173,6 @@ public class VideoView extends TextureView implements TextureView.SurfaceTexture
     public boolean onError(IMediaPlayer mp, int what, int extra) {
         if (callback != null) {
             callback.onError(mp, what, extra);
-        }
-
-        if (controller != null) {
-            controller.onError();
         }
         return true;
     }
@@ -208,39 +184,18 @@ public class VideoView extends TextureView implements TextureView.SurfaceTexture
         }
 
         switch (what) {
-            case IMediaPlayer.MEDIA_INFO_BUFFERING_START: {
-                if (controller != null) {
-                    controller.onBufferStart(extra);
-                }
-                break;
-            }
-
-            case IMediaPlayer.MEDIA_INFO_BUFFERING_END: {
-                if (controller != null) {
-                    controller.onBufferEnd(extra);
-                }
-                break;
-            }
-
-            case IMediaPlayer.MEDIA_INFO_VIDEO_ROTATION_CHANGED:{
+            case IMediaPlayer.MEDIA_INFO_VIDEO_ROTATION_CHANGED: {
                 rotation = extra;
-                Log.d("controller", "rotation:" + rotation);
                 break;
             }
         }
         return false;
     }
 
-    private int rotation;
-
     @Override
     public void onPrepared(IMediaPlayer mp) {
         if (callback != null) {
             callback.onPrepared(mp);
-        }
-
-        if (controller != null) {
-            controller.onPrepared();
         }
     }
 
@@ -255,21 +210,14 @@ public class VideoView extends TextureView implements TextureView.SurfaceTexture
     }
 
     private void setVideoScaleType() {
-        if (rotation == 90 || rotation == 270) {
-            int temp = this.videoWidth;
-            this.videoWidth = this.videoHeight;
-            this.videoHeight = temp;
-            setRotation(rotation);
-        }
-
         switch (scaleType) {
             case CENTER_CROP: {
-                TextureTransformHelper.centerCrop(this, videoWidth, videoHeight);
+                TextureTransformHelper.centerCrop(this, videoWidth, videoHeight, rotation);
                 break;
             }
 
             case WRAP_CONTENT: {
-                TextureTransformHelper.wrapContent(this, videoWidth, videoHeight);
+                TextureTransformHelper.wrapContent(this, videoWidth, videoHeight, rotation);
                 break;
             }
         }
@@ -280,119 +228,9 @@ public class VideoView extends TextureView implements TextureView.SurfaceTexture
         if (callback != null) {
             callback.onPlayMediaProgress(duration, currentPosition);
         }
-
-        if (controller != null) {
-            controller.onPlayProgress(currentPosition, duration);
-        }
-    }
-
-    @Override
-    public boolean onTouchEvent(MotionEvent event) {
-        float x = event.getX();
-        float y = event.getY();
-        switch (event.getActionMasked()) {
-            case MotionEvent.ACTION_DOWN: {
-                initialX = x;
-                initialY = y;
-                startX = x;
-                startY = y;
-                break;
-            }
-
-            case MotionEvent.ACTION_MOVE: {
-                float deltaX = x - startX;
-                float deltaY = y - startY;
-
-                float distanceX = x - initialX;
-                float distanceY = y - initialY;
-
-                if (orientation == NONE && Math.abs(distanceX) > Math.abs(distanceY)
-                        && Math.abs(distanceX) > touchSlop) {
-                    orientation = HORIZONTAL;
-                }
-
-                if (orientation == NONE && Math.abs(distanceY) > Math.abs(distanceX)
-                        && Math.abs(distanceY) > touchSlop) {
-                    boolean left = x < getWidth() / 2;
-                    orientation = left ? VERTICAL_LEFT : VERTICAL_RIGHT;
-                }
-
-                startX = x;
-                startY = y;
-
-                if (orientation == NONE || controller == null) {
-                    return false;
-                }
-                switch (orientation) {
-                    case HORIZONTAL: {
-                        controller.onHorizontalMove(deltaX);
-                        break;
-                    }
-
-                    case VERTICAL_LEFT: {
-                        controller.onLeftVerticalMove(deltaY);
-                        break;
-                    }
-
-                    case VERTICAL_RIGHT: {
-                        controller.onRightVerticalMove(deltaY);
-                        break;
-                    }
-                }
-                break;
-            }
-
-            case MotionEvent.ACTION_UP: {
-                initialX = 0;
-                initialY = 0;
-                startX = 0;
-                startY = 0;
-                orientation = NONE;
-                break;
-            }
-        }
-        return true;
-    }
-
-    public void setPlayController(Controller controller) {
-        this.controller = controller;
-        if (controller != null) {
-            controller.onAttach(this);
-        }
     }
 
     public void setScaleType(int scaleType) {
         this.scaleType = scaleType;
-    }
-
-    public interface Controller {
-
-        void onAttach(VideoView view);
-
-        void onLeftVerticalMove(float distance);
-
-        void onRightVerticalMove(float distance);
-
-        void onHorizontalMove(float distance);
-
-        void onPreparing();
-
-        void onPrepared();
-
-        void onStart();
-
-        void onPause();
-
-        void onCompletion();
-
-        void onError();
-
-        void onPlayProgress(long progress, long total);
-
-        void onBufferStart(int speed);
-
-        void onBufferEnd(int speed);
-
-        void setVideoUrl(String url);
     }
 }

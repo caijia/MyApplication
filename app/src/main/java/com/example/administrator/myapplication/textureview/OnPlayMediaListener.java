@@ -17,4 +17,10 @@ public interface OnPlayMediaListener {
     void onVideoSizeChanged(IMediaPlayer mp, int width, int height);
 
     void onPlayMediaProgress(long duration, long currentPosition);
+
+    void onStart();
+
+    void onPause();
+
+    void onPreparing();
 }

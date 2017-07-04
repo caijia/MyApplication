@@ -1,7 +1,9 @@
 package com.example.administrator.myapplication.textureview;
 
 import android.annotation.TargetApi;
+import android.app.Activity;
 import android.content.Context;
+import android.content.pm.ActivityInfo;
 import android.os.Build;
 import android.support.annotation.AttrRes;
 import android.support.annotation.NonNull;
@@ -11,20 +13,22 @@ import android.util.AttributeSet;
 import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
+import android.view.ViewGroup;
 import android.widget.FrameLayout;
 import android.widget.LinearLayout;
-import android.widget.RelativeLayout;
 import android.widget.SeekBar;
 import android.widget.TextView;
 
 import com.example.administrator.myapplication.R;
 
-import java.util.Locale;
+import java.text.MessageFormat;
+
+import static android.view.ViewGroup.LayoutParams.MATCH_PARENT;
 
 /**
  * Created by cai.jia on 2017/7/2.
  */
-public class SimpleVideoController extends RelativeLayout implements VideoView.Controller, View.OnClickListener, SeekBar.OnSeekBarChangeListener {
+public class SimpleVideoController extends GestureVideoController implements Controller, View.OnClickListener, SeekBar.OnSeekBarChangeListener {
 
     private TextView videoStartPauseTv;
     private FrameLayout videoStartPauseFl;
@@ -34,6 +38,8 @@ public class SimpleVideoController extends RelativeLayout implements VideoView.C
     private TextView videoTotalTimeTv;
     private TextView videoFullScreenTv;
     private LinearLayout videoBottomBarLl;
+    private FrameLayout videoProgressFl;
+    private TextView videoNetSpeedTv;
 
     public SimpleVideoController(@NonNull Context context) {
         this(context, null);
@@ -66,42 +72,39 @@ public class SimpleVideoController extends RelativeLayout implements VideoView.C
         videoTotalTimeTv = (TextView) findViewById(R.id.video_total_time_tv);
         videoFullScreenTv = (TextView) findViewById(R.id.video_full_screen_tv);
         videoBottomBarLl = (LinearLayout) findViewById(R.id.video_bottom_bar_ll);
+        videoProgressFl = (FrameLayout) findViewById(R.id.video_progress_fl);
+        videoNetSpeedTv = (TextView) findViewById(R.id.video_net_speed_tv);
 
         videoStartPauseFl.setOnClickListener(this);
         videoVoiceTv.setOnClickListener(this);
         videoFullScreenTv.setOnClickListener(this);
         videoPlayProgressSeekBar.setOnSeekBarChangeListener(this);
+        setOnClickListener(this);
     }
 
     private VideoView videoView;
 
-    @Override
-    public void onAttach(VideoView view) {
-        this.videoView = view;
-    }
-
-    @Override
     public void onLeftVerticalMove(float distance) {
-
+        Log.d("controller", "onLeftVerticalMove:" + distance);
     }
 
-    @Override
     public void onRightVerticalMove(float distance) {
-
+        Log.d("controller", "onRightVerticalMove:" + distance);
     }
 
-    @Override
     public void onHorizontalMove(float distance) {
-
+        Log.d("controller", "onHorizontalMove:" + distance);
     }
 
     @Override
     public void onPreparing() {
+        videoProgressFl.setVisibility(VISIBLE);
     }
 
     @Override
     public void onPrepared() {
-        videoView.start();
+        videoProgressFl.setVisibility(GONE);
+        videoView.start(videoUrl);
     }
 
     @Override
@@ -128,51 +131,77 @@ public class SimpleVideoController extends RelativeLayout implements VideoView.C
         Log.d("controller", "status:onError" + (videoStartPauseTv.isSelected() ? "start" : "pause"));
     }
 
+    private boolean isPlaying;
+
     @Override
     public void onBufferStart(int speed) {
+        isPlaying = videoStartPauseTv.isSelected();
         videoStartPauseTv.setSelected(false);
-        Log.d("controller", "status:onBufferStart" + (videoStartPauseTv.isSelected() ? "start" : "pause"));
+        videoProgressFl.setVisibility(VISIBLE);
+        videoNetSpeedTv.setText(MessageFormat.format("{0}k/s", speed));
     }
 
     @Override
     public void onBufferEnd(int speed) {
-        videoStartPauseTv.setSelected(true);
-        Log.d("controller", "status:onBufferEnd" + (videoStartPauseTv.isSelected() ? "start" : "pause"));
+        videoProgressFl.setVisibility(GONE);
+        videoStartPauseTv.setSelected(isPlaying);
+        if (isPlaying) {
+            videoView.start(videoUrl);
+
+        }else{
+            videoView.pause();
+        }
     }
 
     @Override
     public void onPlayProgress(long progress, long total) {
         videoPlayProgressSeekBar.setMax((int) total);
         videoPlayProgressSeekBar.setProgress((int) progress);
-        videoCurrentTimeTv.setText(formatTime(progress));
-        videoTotalTimeTv.setText(formatTime(total));
+        videoCurrentTimeTv.setText(ControllerUtil.formatTime(progress));
+        videoTotalTimeTv.setText(ControllerUtil.formatTime(total));
+    }
+
+    @Override
+    public void onBufferingUpdate(int percent) {
+        int secondaryProgress = Math.round(videoPlayProgressSeekBar.getMax() * percent * 0.01f);
+        videoPlayProgressSeekBar.setSecondaryProgress(secondaryProgress);
+    }
+
+    @Override
+    public void attachVideoView(VideoView view) {
+        videoView = view;
+    }
+
+    @Override
+    public void showController() {
+        videoBottomBarLl.setVisibility(VISIBLE);
+    }
+
+    @Override
+    public void hideController() {
+        videoBottomBarLl.setVisibility(GONE);
     }
 
     private String videoUrl;
+    private ViewGroup videoContainerParent;
+    private ViewGroup videoContainer;
 
     @Override
     public void setVideoUrl(String videoUrl) {
         this.videoUrl = videoUrl;
     }
 
-    private String formatTime(long duration) {
-        int totalSecond = (int) (duration / 1000) + (duration % 1000 < 500 ? 0 : 1);
-        int h = totalSecond / 3600;
-        int m = totalSecond % 3600 / 60;
-        int s = totalSecond % 3600 % 60;
-        if (h > 0) {
-            return String.format(Locale.CHINESE,"%02d:%02d:%02d", h, m, s);
-
-        }else{
-            return String.format(Locale.CHINESE,"%02d:%02d", m, s);
-        }
+    @Override
+    public void setParentLayout(ViewGroup parent,ViewGroup container) {
+        this.videoContainerParent = parent;
+        this.videoContainer = container;
     }
 
     @Override
     public void onClick(View view) {
         if (view == videoStartPauseFl) {
-            boolean start = videoStartPauseTv.isSelected();
-            if (start) {
+            boolean isPlaying = videoStartPauseTv.isSelected();
+            if (isPlaying) {
                 videoView.pause();
 
             }else{
@@ -183,8 +212,44 @@ public class SimpleVideoController extends RelativeLayout implements VideoView.C
 
 
         } else if (view == videoFullScreenTv) {
+            toggleFullScreen();
 
+        } else if (view == this) {
+            isShowController = !isShowController;
+            if (isShowController) {
+                hideController();
+            }else{
+                showController();
+            }
+        }
+    }
 
+    private boolean isShowController;
+
+    private void toggleFullScreen() {
+        if (videoContainerParent == null || videoContainer == null) {
+            return;
+        }
+
+        int index = videoContainerParent.indexOfChild(videoContainer);
+        boolean notFullScreen = index != -1;
+        Activity activity = ControllerUtil.getActivity(getContext());
+        if (activity == null) {
+            return;
+        }
+
+        ViewGroup content = (ViewGroup) activity.findViewById(android.R.id.content);
+        if (notFullScreen) {
+            videoContainerParent.removeView(videoContainer);
+            content.addView(videoContainer, MATCH_PARENT, MATCH_PARENT);
+            ControllerUtil.toggleActionBarAndStatusBar(getContext(),true);
+            activity.setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_LANDSCAPE);
+
+        }else{
+            content.removeView(videoContainer);
+            videoContainerParent.addView(videoContainer, MATCH_PARENT, MATCH_PARENT);
+            ControllerUtil.toggleActionBarAndStatusBar(getContext(),false);
+            activity.setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_PORTRAIT);
         }
     }
 

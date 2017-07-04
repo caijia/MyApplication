@@ -5,6 +5,30 @@
     android:orientation="vertical">
 
     <FrameLayout
+        android:id="@+id/video_progress_fl"
+        android:layout_width="60dp"
+        android:layout_height="60dp"
+        android:visibility="gone"
+        android:layout_centerInParent="true">
+
+        <ProgressBar
+            android:id="@+id/progressBar2"
+            style="?android:attr/progressBarStyle"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_gravity="center"/>
+
+        <TextView
+            android:id="@+id/video_net_speed_tv"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_gravity="center"
+            android:textSize="12sp"
+            android:text="0k/s"/>
+
+    </FrameLayout>
+
+    <FrameLayout
         android:id="@+id/video_start_pause_fl"
         android:layout_width="60dp"
         android:layout_height="60dp"
