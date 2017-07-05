@@ -6,12 +6,6 @@ public interface Controller {
 
     void attachVideoView(VideoView view);
 
-    void onLeftVerticalMove(float distance);
-
-    void onRightVerticalMove(float distance);
-
-    void onHorizontalMove(float distance);
-
     void onPreparing();
 
     void onPrepared();

@@ -3,10 +3,14 @@ package com.example.administrator.myapplication.textureview;
 import android.annotation.TargetApi;
 import android.content.Context;
 import android.os.Build;
+import android.support.annotation.IntDef;
 import android.util.AttributeSet;
 import android.view.MotionEvent;
 import android.view.ViewConfiguration;
 import android.widget.RelativeLayout;
+
+import java.lang.annotation.Retention;
+import java.lang.annotation.RetentionPolicy;
 
 /**
  * Created by cai.jia on 2017/7/4 0004
@@ -70,48 +74,87 @@ public abstract class GestureVideoController extends RelativeLayout {
 
                 float distanceX = x - initialX;
                 float distanceY = y - initialY;
+                boolean isFirst = false;
 
                 if (orientation == NONE && Math.abs(distanceX) > Math.abs(distanceY)
                         && Math.abs(distanceX) > touchSlop) {
+                    getParent().requestDisallowInterceptTouchEvent(true);
                     orientation = HORIZONTAL;
+                    initialX = distanceX > 0 ? initialX + touchSlop : initialX - touchSlop;
+                    distanceX = x - initialX;
+                    onHorizontalMove(START,distanceX);
+                    isFirst = true;
                 }
 
                 if (orientation == NONE && Math.abs(distanceY) > Math.abs(distanceX)
                         && Math.abs(distanceY) > touchSlop) {
+                    getParent().requestDisallowInterceptTouchEvent(true);
                     boolean left = x < getWidth() / 2;
                     orientation = left ? VERTICAL_LEFT : VERTICAL_RIGHT;
+                    initialY = distanceY > 0 ? initialY + touchSlop : initialY - touchSlop;
+                    distanceY = y - initialY;
+
+                    if (left) {
+                        onLeftVerticalMove(START,-distanceY);
+                    }else{
+                        onRightVerticalMove(START,-distanceY);
+                    }
+                    isFirst = true;
                 }
 
                 startX = x;
                 startY = y;
+                if (isFirst) {
+                    return super.onTouchEvent(event);
+                }
 
                 switch (orientation) {
                     case HORIZONTAL: {
-                        onHorizontalMove(deltaX);
+                        onHorizontalMove(MOVE,distanceX);
                         break;
                     }
 
                     case VERTICAL_LEFT: {
-                        onLeftVerticalMove(deltaY);
+                        onLeftVerticalMove(MOVE,-distanceY);
                         break;
                     }
 
                     case VERTICAL_RIGHT: {
-                        onRightVerticalMove(deltaY);
+                        onRightVerticalMove(MOVE,-distanceY);
                         break;
                     }
-                }
-
-                if (orientation == NONE) {
-                    MotionEvent cancelEvent = MotionEvent.obtain(event);
-                    cancelEvent.setAction(MotionEvent.ACTION_CANCEL);
-                    onTouchEvent(event);
-                    cancelEvent.recycle();
                 }
                 break;
             }
 
             case MotionEvent.ACTION_UP: {
+                float distanceX = x - initialX;
+                float distanceY = y - initialY;
+
+                switch (orientation) {
+                    case HORIZONTAL: {
+                        onHorizontalMove(END,distanceX);
+                        break;
+                    }
+
+                    case VERTICAL_LEFT: {
+                        onLeftVerticalMove(END,-distanceY);
+                        break;
+                    }
+
+                    case VERTICAL_RIGHT: {
+                        onRightVerticalMove(END,-distanceY);
+                        break;
+                    }
+                }
+
+                if (orientation != NONE) {
+                    MotionEvent cancelEvent = MotionEvent.obtain(event);
+                    cancelEvent.setAction(MotionEvent.ACTION_CANCEL);
+                    onTouchEvent(cancelEvent);
+                    cancelEvent.recycle();
+                }
+
                 initialX = 0;
                 initialY = 0;
                 startX = 0;
@@ -123,9 +166,18 @@ public abstract class GestureVideoController extends RelativeLayout {
         return super.onTouchEvent(event);
     }
 
-    public abstract void onLeftVerticalMove(float distance);
+    public static final int START = 1;
+    public static final int MOVE = 2;
+    public static final int END = 3;
 
-    public abstract void onRightVerticalMove(float distance);
+    @Retention(RetentionPolicy.SOURCE)
+    @IntDef({START,MOVE,END})
+    public @interface MoveState{
+    }
 
-    public abstract void onHorizontalMove(float distance);
+    public abstract void onLeftVerticalMove(@MoveState int state,float distance);
+
+    public abstract void onRightVerticalMove(@MoveState int state,float distance);
+
+    public abstract void onHorizontalMove(@MoveState int state,float distance);
 }

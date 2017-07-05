@@ -1,7 +1,5 @@
 package com.example.administrator.myapplication.textureview;
 
-import tv.danmaku.ijk.media.player.IMediaPlayer;
-
 /**
  * Created by cai.jia on 2017/7/4 0004
  */
@@ -22,21 +20,21 @@ public class VideoControllerHelper implements OnPlayMediaListener {
     }
 
     @Override
-    public void onBufferingUpdate(IMediaPlayer mp, int percent) {
+    public void onBufferingUpdate(int percent) {
         if (controller != null) {
             controller.onBufferingUpdate(percent);
         }
     }
 
     @Override
-    public void onCompletion(IMediaPlayer mp) {
+    public void onCompletion() {
         if (controller != null) {
             controller.onCompletion();
         }
     }
 
     @Override
-    public boolean onError(IMediaPlayer mp, int what, int extra) {
+    public boolean onError(int what, int extra) {
         if (controller != null) {
             controller.onError();
         }
@@ -44,34 +42,32 @@ public class VideoControllerHelper implements OnPlayMediaListener {
     }
 
     @Override
-    public boolean onInfo(IMediaPlayer mp, int what, int extra) {
-        switch (what) {
-            case IMediaPlayer.MEDIA_INFO_BUFFERING_START: {
-                if (controller != null) {
-                    controller.onBufferStart(extra);
-                }
-                break;
-            }
-
-            case IMediaPlayer.MEDIA_INFO_BUFFERING_END: {
-                if (controller != null) {
-                    controller.onBufferEnd(extra);
-                }
-                break;
-            }
+    public void onBufferStart(int speed) {
+        if (controller != null) {
+            controller.onBufferStart(speed);
         }
-        return false;
     }
 
     @Override
-    public void onPrepared(IMediaPlayer mp) {
+    public void onBufferEnd(int speed) {
+        if (controller != null) {
+            controller.onBufferEnd(speed);
+        }
+    }
+
+    @Override
+    public void onVideoRotation(int rotation) {
+    }
+
+    @Override
+    public void onPrepared() {
         if (controller != null) {
             controller.onPrepared();
         }
     }
 
     @Override
-    public void onVideoSizeChanged(IMediaPlayer mp, int width, int height) {
+    public void onVideoSizeChanged(int width, int height) {
     }
 
     @Override

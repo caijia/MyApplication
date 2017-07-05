@@ -8,11 +8,10 @@ import android.support.annotation.AttrRes;
 import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
 import android.support.annotation.StyleRes;
+import android.text.TextUtils;
 import android.util.AttributeSet;
 import android.view.Surface;
 import android.view.TextureView;
-
-import tv.danmaku.ijk.media.player.IMediaPlayer;
 
 /**
  * Created by cai.jia on 2017/6/30 0030
@@ -60,15 +59,30 @@ public class VideoView extends TextureView implements TextureView.SurfaceTexture
         setSurfaceTextureListener(this);
     }
 
+    private SurfaceTexture surfaceTexture;
+
     @Override
     public void onSurfaceTextureAvailable(SurfaceTexture surfaceTexture, int width, int height) {
-        if (surface == null) {
-            surface = new Surface(surfaceTexture);
+        surfaceAvailable = true;
+        if (this.surfaceTexture == null) {
+            this.surfaceTexture = surfaceTexture;
+            surface = new Surface(this.surfaceTexture);
 
-        } else {
-            surface = new Surface(surfaceTexture);
-            setSurface(surface);
-            resume();
+        }else{
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.JELLY_BEAN) {
+                setSurfaceTexture(this.surfaceTexture);
+                if (isPause) {
+                    pause();
+
+                }else{
+                    start(videoUrl);
+                }
+
+            }else{
+                surface = new Surface(surfaceTexture);
+                setSurface(surface);
+                start(videoUrl);
+            }
         }
     }
 
@@ -79,28 +93,46 @@ public class VideoView extends TextureView implements TextureView.SurfaceTexture
 
     @Override
     public boolean onSurfaceTextureDestroyed(SurfaceTexture surface) {
+        surfaceAvailable = false;
+        isPause = isPause();
         pause();
-        return true;
+        return Build.VERSION.SDK_INT < Build.VERSION_CODES.JELLY_BEAN;
     }
+
+    private boolean isPause;
+    private String videoUrl;
+    private boolean surfaceAvailable;
 
     @Override
     public void onSurfaceTextureUpdated(SurfaceTexture surface) {
+    }
 
+    private boolean isPause() {
+        if (playerHelper != null) {
+            return playerHelper.isPause();
+        }
+        return false;
     }
 
     public void start(String url) {
-        if (playerHelper != null) {
+        if (TextUtils.isEmpty(url)) {
+            return;
+        }
+        videoUrl = url;
+        if (playerHelper != null && surfaceAvailable) {
             playerHelper.start(url, surface);
         }
     }
 
-    private void resume() {
-        if (playerHelper != null) {
-            playerHelper.resume();
-        }
-    }
-
     public void destroy() {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.JELLY_BEAN && surfaceTexture != null) {
+            surfaceTexture.release();
+        }
+
+        if (surface != null) {
+            surface.release();
+        }
+
         if (playerHelper != null) {
             playerHelper.stopPlayback();
         }
@@ -135,16 +167,16 @@ public class VideoView extends TextureView implements TextureView.SurfaceTexture
     }
 
     @Override
-    public void onBufferingUpdate(IMediaPlayer mp, int percent) {
+    public void onBufferingUpdate(int percent) {
         if (callback != null) {
-            callback.onBufferingUpdate(mp, percent);
+            callback.onBufferingUpdate(percent);
         }
     }
 
     @Override
-    public void onCompletion(IMediaPlayer mp) {
+    public void onCompletion() {
         if (callback != null) {
-            callback.onCompletion(mp);
+            callback.onCompletion();
         }
     }
 
@@ -170,42 +202,56 @@ public class VideoView extends TextureView implements TextureView.SurfaceTexture
     }
 
     @Override
-    public boolean onError(IMediaPlayer mp, int what, int extra) {
+    public boolean onError(int what, int extra) {
         if (callback != null) {
-            callback.onError(mp, what, extra);
+            callback.onError(what, extra);
         }
         return true;
     }
 
     @Override
-    public boolean onInfo(IMediaPlayer mp, int what, int extra) {
+    public void onBufferStart(int speed) {
         if (callback != null) {
-            callback.onInfo(mp, what, extra);
-        }
-
-        switch (what) {
-            case IMediaPlayer.MEDIA_INFO_VIDEO_ROTATION_CHANGED: {
-                rotation = extra;
-                break;
-            }
-        }
-        return false;
-    }
-
-    @Override
-    public void onPrepared(IMediaPlayer mp) {
-        if (callback != null) {
-            callback.onPrepared(mp);
+            callback.onBufferStart(speed);
         }
     }
 
     @Override
-    public void onVideoSizeChanged(IMediaPlayer mp, int width, int height) {
+    public void onBufferEnd(int speed) {
+        if (callback != null) {
+            callback.onBufferEnd(speed);
+        }
+    }
+
+    @Override
+    public void onVideoRotation(int rotation) {
+        if (callback != null) {
+            callback.onVideoRotation(rotation);
+        }
+        this.rotation = rotation;
+    }
+
+    @Override
+    public void onPrepared() {
+        if (callback != null) {
+            callback.onPrepared();
+        }
+    }
+
+    @Override
+    public void onVideoSizeChanged(int width, int height) {
         videoWidth = width;
         videoHeight = height;
         setVideoScaleType();
         if (callback != null) {
-            callback.onVideoSizeChanged(mp, width, height);
+            callback.onVideoSizeChanged(width, height);
+        }
+    }
+
+    @Override
+    public void onPlayMediaProgress(long duration, long currentPosition) {
+        if (callback != null) {
+            callback.onPlayMediaProgress(duration, currentPosition);
         }
     }
 
@@ -220,13 +266,6 @@ public class VideoView extends TextureView implements TextureView.SurfaceTexture
                 TextureTransformHelper.wrapContent(this, videoWidth, videoHeight, rotation);
                 break;
             }
-        }
-    }
-
-    @Override
-    public void onPlayMediaProgress(long duration, long currentPosition) {
-        if (callback != null) {
-            callback.onPlayMediaProgress(duration, currentPosition);
         }
     }
 

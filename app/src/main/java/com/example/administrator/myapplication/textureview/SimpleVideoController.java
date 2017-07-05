@@ -10,7 +10,6 @@ import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
 import android.support.annotation.StyleRes;
 import android.util.AttributeSet;
-import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -18,6 +17,7 @@ import android.widget.FrameLayout;
 import android.widget.LinearLayout;
 import android.widget.SeekBar;
 import android.widget.TextView;
+import android.widget.ViewSwitcher;
 
 import com.example.administrator.myapplication.R;
 
@@ -40,6 +40,7 @@ public class SimpleVideoController extends GestureVideoController implements Con
     private LinearLayout videoBottomBarLl;
     private FrameLayout videoProgressFl;
     private TextView videoNetSpeedTv;
+    private ViewSwitcher viewSwitcher;
 
     public SimpleVideoController(@NonNull Context context) {
         this(context, null);
@@ -74,6 +75,7 @@ public class SimpleVideoController extends GestureVideoController implements Con
         videoBottomBarLl = (LinearLayout) findViewById(R.id.video_bottom_bar_ll);
         videoProgressFl = (FrameLayout) findViewById(R.id.video_progress_fl);
         videoNetSpeedTv = (TextView) findViewById(R.id.video_net_speed_tv);
+        viewSwitcher = (ViewSwitcher) findViewById(R.id.view_switcher);
 
         videoStartPauseFl.setOnClickListener(this);
         videoVoiceTv.setOnClickListener(this);
@@ -84,16 +86,86 @@ public class SimpleVideoController extends GestureVideoController implements Con
 
     private VideoView videoView;
 
-    public void onLeftVerticalMove(float distance) {
-        Log.d("controller", "onLeftVerticalMove:" + distance);
+    private int currentBrightness;
+
+    public void onLeftVerticalMove(@MoveState int state,float distance) {
+        int dp = ControllerUtil.spToDp(getContext(), distance);
+        int brightness = dp * 2;
+        switch (state) {
+            case GestureVideoController.START:{
+                viewSwitcher.setVisibility(VISIBLE);
+                viewSwitcher.setDisplayedChild(0);
+                currentBrightness = ControllerUtil.getActivityBrightness(getContext());
+                ControllerUtil.setActivityBrightness(getContext(), currentBrightness + brightness);
+                break;
+            }
+
+            case GestureVideoController.MOVE:{
+                ControllerUtil.setActivityBrightness(getContext(), currentBrightness + brightness);
+                break;
+            }
+
+            case GestureVideoController.END:{
+                viewSwitcher.setVisibility(GONE);
+                ControllerUtil.setActivityBrightness(getContext(), currentBrightness + brightness);
+                break;
+            }
+        }
     }
 
-    public void onRightVerticalMove(float distance) {
-        Log.d("controller", "onRightVerticalMove:" + distance);
+    private int currentVolume;
+
+    public void onRightVerticalMove(@MoveState int state,float distance) {
+        int dp = ControllerUtil.spToDp(getContext(), distance);
+        int volume = (int) (dp * 0.1f);
+        switch (state) {
+            case GestureVideoController.START:{
+                viewSwitcher.setVisibility(VISIBLE);
+                viewSwitcher.setDisplayedChild(1);
+                currentVolume = ControllerUtil.getVolume(getContext());
+                ControllerUtil.setVolume(getContext(), currentVolume + volume);
+                break;
+            }
+
+            case GestureVideoController.MOVE:{
+                ControllerUtil.setVolume(getContext(), currentVolume + volume);
+                break;
+            }
+
+            case GestureVideoController.END:{
+                viewSwitcher.setVisibility(GONE);
+                ControllerUtil.setVolume(getContext(), currentVolume + volume);
+                break;
+            }
+        }
     }
 
-    public void onHorizontalMove(float distance) {
-        Log.d("controller", "onHorizontalMove:" + distance);
+    private int currentProgress;
+    private boolean horizontalMove;
+
+    public void onHorizontalMove(@MoveState int state,float distance) {
+        int dp = ControllerUtil.spToDp(getContext(), distance);
+        int time = Math.round(dp * 0.5f) * 1000;
+        switch (state) {
+            case GestureVideoController.START:{
+                horizontalMove = true;
+                currentProgress = videoPlayProgressSeekBar.getProgress();
+                videoPlayProgressSeekBar.setProgress(currentProgress + time);
+                break;
+            }
+
+            case GestureVideoController.MOVE:{
+                videoPlayProgressSeekBar.setProgress(currentProgress + time);
+                break;
+            }
+
+            case GestureVideoController.END:{
+                horizontalMove = false;
+                videoPlayProgressSeekBar.setProgress(currentProgress + time);
+                videoView.seekTo(videoPlayProgressSeekBar.getProgress());
+                break;
+            }
+        }
     }
 
     @Override
@@ -110,25 +182,21 @@ public class SimpleVideoController extends GestureVideoController implements Con
     @Override
     public void onStart() {
         videoStartPauseTv.setSelected(true);
-        Log.d("controller", "status:onStart" + (videoStartPauseTv.isSelected() ? "start" : "pause"));
     }
 
     @Override
     public void onPause() {
         videoStartPauseTv.setSelected(false);
-        Log.d("controller", "status:onPause" + (videoStartPauseTv.isSelected() ? "start" : "pause"));
     }
 
     @Override
     public void onCompletion() {
         videoStartPauseTv.setSelected(false);
-        Log.d("controller", "status:onCompletion" + (videoStartPauseTv.isSelected() ? "start" : "pause"));
     }
 
     @Override
     public void onError() {
         videoStartPauseTv.setSelected(false);
-        Log.d("controller", "status:onError" + (videoStartPauseTv.isSelected() ? "start" : "pause"));
     }
 
     private boolean isPlaying;
@@ -156,9 +224,9 @@ public class SimpleVideoController extends GestureVideoController implements Con
     @Override
     public void onPlayProgress(long progress, long total) {
         videoPlayProgressSeekBar.setMax((int) total);
-        videoPlayProgressSeekBar.setProgress((int) progress);
-        videoCurrentTimeTv.setText(ControllerUtil.formatTime(progress));
-        videoTotalTimeTv.setText(ControllerUtil.formatTime(total));
+        if (!horizontalMove) {
+            videoPlayProgressSeekBar.setProgress((int) progress);
+        }
     }
 
     @Override
@@ -255,6 +323,8 @@ public class SimpleVideoController extends GestureVideoController implements Con
 
     @Override
     public void onProgressChanged(SeekBar seekBar, int progress, boolean fromUser) {
+        videoCurrentTimeTv.setText(ControllerUtil.formatTime(progress));
+        videoTotalTimeTv.setText(ControllerUtil.formatTime(seekBar.getMax()));
     }
 
     @Override

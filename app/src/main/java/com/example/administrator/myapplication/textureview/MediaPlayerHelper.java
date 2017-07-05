@@ -69,7 +69,7 @@ public class MediaPlayerHelper implements IjkMediaPlayer.OnPreparedListener,
             e.printStackTrace();
             currentState = STATE_ERROR;
             if (callback != null) {
-                callback.onError(mediaPlayer, MEDIA_ERROR_UNKNOWN, -1);
+                callback.onError(MEDIA_ERROR_UNKNOWN, -1);
             }
         }
     }
@@ -88,7 +88,7 @@ public class MediaPlayerHelper implements IjkMediaPlayer.OnPreparedListener,
             e.printStackTrace();
             currentState = STATE_ERROR;
             if (callback != null) {
-                callback.onError(mediaPlayer, MEDIA_ERROR_UNKNOWN, -1);
+                callback.onError(MEDIA_ERROR_UNKNOWN, -1);
             }
         }
     }
@@ -105,22 +105,6 @@ public class MediaPlayerHelper implements IjkMediaPlayer.OnPreparedListener,
 
         if (progressHelper != null) {
             progressHelper.stop();
-        }
-    }
-
-    public void resume() {
-        if (isInPlaybackState()) {
-            if (!mediaPlayer.isPlaying() && currentState == STATE_PAUSED) {
-                mediaPlayer.start();
-                currentState = STATE_PLAYING;
-
-            }else if(currentState == STATE_PLAYBACK_COMPLETED){
-               seekTo(0);
-            }
-        }
-
-        if (progressHelper != null) {
-            progressHelper.start();
         }
     }
 
@@ -201,7 +185,7 @@ public class MediaPlayerHelper implements IjkMediaPlayer.OnPreparedListener,
     @Override
     public void onBufferingUpdate(IMediaPlayer mp, int percent) {
         if (callback != null) {
-            callback.onBufferingUpdate(mp, percent);
+            callback.onBufferingUpdate(percent);
         }
     }
 
@@ -209,7 +193,7 @@ public class MediaPlayerHelper implements IjkMediaPlayer.OnPreparedListener,
     public void onCompletion(IMediaPlayer mp) {
         currentState = STATE_PLAYBACK_COMPLETED;
         if (callback != null) {
-            callback.onCompletion(mp);
+            callback.onCompletion();
             long duration = mediaPlayer.getDuration();
             callback.onPlayMediaProgress(duration, duration);
         }
@@ -229,7 +213,7 @@ public class MediaPlayerHelper implements IjkMediaPlayer.OnPreparedListener,
         }
 
         if (callback != null) {
-            callback.onError(mp, what, extra);
+            callback.onError(what, extra);
             return true;
         }
         return true;
@@ -237,9 +221,27 @@ public class MediaPlayerHelper implements IjkMediaPlayer.OnPreparedListener,
 
     @Override
     public boolean onInfo(IMediaPlayer mp, int what, int extra) {
-        if (callback != null) {
-            return callback.onInfo(mp, what, extra);
+        if (callback == null) {
+            return false;
         }
+
+        switch (what) {
+            case IMediaPlayer.MEDIA_INFO_VIDEO_ROTATION_CHANGED: {
+                callback.onVideoRotation(extra);
+                break;
+            }
+
+            case IMediaPlayer.MEDIA_INFO_BUFFERING_START: {
+                callback.onBufferStart(extra);
+                break;
+            }
+
+            case IMediaPlayer.MEDIA_INFO_BUFFERING_END: {
+                callback.onBufferEnd(extra);
+                break;
+            }
+        }
+
         return false;
     }
 
@@ -247,14 +249,14 @@ public class MediaPlayerHelper implements IjkMediaPlayer.OnPreparedListener,
     public void onPrepared(IMediaPlayer mp) {
         currentState = STATE_PREPARED;
         if (callback != null) {
-            callback.onPrepared(mp);
+            callback.onPrepared();
         }
     }
 
     @Override
     public void onVideoSizeChanged(IMediaPlayer mp, int width, int height, int i2, int i3) {
         if (callback != null) {
-            callback.onVideoSizeChanged(mp, width, height);
+            callback.onVideoSizeChanged(width, height);
         }
     }
 
@@ -283,5 +285,9 @@ public class MediaPlayerHelper implements IjkMediaPlayer.OnPreparedListener,
             return mediaPlayer.getDuration();
         }
         return 0;
+    }
+
+    public boolean isPause() {
+        return currentState == STATE_PAUSED;
     }
 }

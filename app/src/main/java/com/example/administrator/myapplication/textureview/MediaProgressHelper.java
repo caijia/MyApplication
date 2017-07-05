@@ -29,14 +29,12 @@ public class MediaProgressHelper implements Runnable {
         handler.removeCallbacks(this);
         handler.sendMessage(handler.obtainMessage(MSG_GET_PLAY_DURATION));
         handler.postDelayed(this, 1000);
-        System.out.println("MediaProgressHelper:video_start");
     }
 
     public void stop() {
         isStop = true;
         handler.removeMessages(MSG_GET_PLAY_DURATION);
         handler.removeCallbacks(this);
-        System.out.println("MediaProgressHelper:stop");
     }
 
     private void onPlayMediaProgress(long duration, long currentPosition) {

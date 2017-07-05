@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
-<merge xmlns:android="http://schemas.android.com/apk/res/android"
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:orientation="vertical">
@@ -43,6 +43,58 @@
             android:drawableLeft="@drawable/video_start_pause"/>
 
     </FrameLayout>
+
+    <ViewSwitcher
+        android:id="@+id/view_switcher"
+        android:layout_width="160dp"
+        android:layout_height="100dp"
+        android:background="#99000000"
+        android:visibility="gone"
+        android:layout_centerInParent="true">
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:orientation="vertical"
+            android:gravity="center">
+
+            <ImageView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:src="@drawable/ic_gesture_voice"/>
+
+            <ProgressBar
+                style="?android:attr/progressBarStyleHorizontal"
+                android:layout_width="match_parent"
+                android:layout_height="4dp"
+                android:progress="20"
+                android:layout_marginTop="12dp"
+                android:progressDrawable="@drawable/horizontal_progress_style"/>
+
+        </LinearLayout>
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:orientation="vertical"
+            android:gravity="center">
+
+            <ImageView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:src="@drawable/ic_gesture_brightness"/>
+
+            <ProgressBar
+                style="?android:attr/progressBarStyleHorizontal"
+                android:layout_width="match_parent"
+                android:layout_height="4dp"
+                android:progress="20"
+                android:layout_marginTop="12dp"
+                android:progressDrawable="@drawable/horizontal_progress_style"/>
+
+        </LinearLayout>
+
+    </ViewSwitcher>
 
     <LinearLayout
         android:id="@+id/video_bottom_bar_ll"
@@ -104,4 +156,4 @@
 
     </LinearLayout>
 
-</merge>
+</RelativeLayout>

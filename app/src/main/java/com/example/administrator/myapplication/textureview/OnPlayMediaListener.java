@@ -1,20 +1,22 @@
 package com.example.administrator.myapplication.textureview;
 
-import tv.danmaku.ijk.media.player.IMediaPlayer;
-
 public interface OnPlayMediaListener {
 
-    void onBufferingUpdate(IMediaPlayer mp, int percent);
+    void onBufferingUpdate(int percent);
 
-    void onCompletion(IMediaPlayer mp);
+    void onCompletion();
 
-    boolean onError(IMediaPlayer mp, int what, int extra);
+    boolean onError(int what, int extra);
 
-    boolean onInfo(IMediaPlayer mp, int what, int extra);
+    void onBufferStart(int speed);
 
-    void onPrepared(IMediaPlayer mp);
+    void onBufferEnd(int speed);
 
-    void onVideoSizeChanged(IMediaPlayer mp, int width, int height);
+    void onVideoRotation(int rotation);
+
+    void onPrepared();
+
+    void onVideoSizeChanged(int width, int height);
 
     void onPlayMediaProgress(long duration, long currentPosition);
 
