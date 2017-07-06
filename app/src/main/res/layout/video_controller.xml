@@ -8,152 +8,37 @@
         android:id="@+id/video_progress_fl"
         android:layout_width="60dp"
         android:layout_height="60dp"
-        android:visibility="gone"
-        android:layout_centerInParent="true">
+        android:layout_centerInParent="true"
+        android:visibility="gone">
 
         <ProgressBar
             android:id="@+id/progressBar2"
             style="?android:attr/progressBarStyle"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:layout_gravity="center"/>
+            android:layout_gravity="center" />
 
         <TextView
             android:id="@+id/video_net_speed_tv"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_gravity="center"
-            android:textSize="12sp"
-            android:text="0k/s"/>
+            android:text="0k/s"
+            android:textSize="12sp" />
 
     </FrameLayout>
 
-    <FrameLayout
-        android:id="@+id/video_start_pause_fl"
-        android:layout_width="60dp"
-        android:layout_height="60dp"
-        android:background="@drawable/shape_start_pause_bg"
-        android:layout_centerInParent="true">
-
-        <TextView
-            android:id="@+id/video_start_pause_tv"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_gravity="center"
-            android:drawableLeft="@drawable/video_start_pause"/>
-
-    </FrameLayout>
-
-    <ViewSwitcher
+    <com.example.administrator.myapplication.textureview.ControllerSwitcher
         android:id="@+id/view_switcher"
-        android:layout_width="160dp"
-        android:layout_height="100dp"
-        android:background="#99000000"
-        android:visibility="gone"
-        android:layout_centerInParent="true">
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_centerInParent="true" />
 
-        <LinearLayout
-            android:layout_width="match_parent"
-            android:layout_height="match_parent"
-            android:orientation="vertical"
-            android:gravity="center">
-
-            <ImageView
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:src="@drawable/ic_gesture_voice"/>
-
-            <ProgressBar
-                style="?android:attr/progressBarStyleHorizontal"
-                android:layout_width="match_parent"
-                android:layout_height="4dp"
-                android:progress="20"
-                android:layout_marginTop="12dp"
-                android:progressDrawable="@drawable/horizontal_progress_style"/>
-
-        </LinearLayout>
-
-        <LinearLayout
-            android:layout_width="match_parent"
-            android:layout_height="match_parent"
-            android:orientation="vertical"
-            android:gravity="center">
-
-            <ImageView
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:src="@drawable/ic_gesture_brightness"/>
-
-            <ProgressBar
-                style="?android:attr/progressBarStyleHorizontal"
-                android:layout_width="match_parent"
-                android:layout_height="4dp"
-                android:progress="20"
-                android:layout_marginTop="12dp"
-                android:progressDrawable="@drawable/horizontal_progress_style"/>
-
-        </LinearLayout>
-
-    </ViewSwitcher>
-
-    <LinearLayout
-        android:id="@+id/video_bottom_bar_ll"
+    <com.example.administrator.myapplication.textureview.ControllerBottomBar
+        android:id="@+id/controller_bottom_bar"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:background="@drawable/shape_video_bottom_bar_bg"
-        android:gravity="center_vertical"
-        android:orientation="horizontal"
-        android:paddingBottom="8dp"
-        android:paddingTop="8dp"
-        android:layout_alignParentBottom="true">
-
-        <TextView
-            android:id="@+id/video_voice_tv"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_marginLeft="12dp"
-            android:layout_marginRight="12dp"
-            android:drawableLeft="@drawable/ic_video_voice" />
-
-        <TextView
-            android:id="@+id/video_current_time_tv"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="00:00"
-            android:textColor="@android:color/white"
-            android:textSize="14sp" />
-
-        <SeekBar
-            android:id="@+id/video_play_progress_seek_bar"
-            android:layout_width="0dp"
-            android:layout_height="wrap_content"
-            android:layout_marginLeft="8dp"
-            android:layout_marginRight="8dp"
-            android:layout_weight="1"
-            android:maxHeight="4dp"
-            android:minHeight="4dp"
-            android:paddingEnd="0dp"
-            android:paddingStart="0dp"
-            android:thumbOffset="0dp"
-            android:progressDrawable="@drawable/horizontal_progress_style"
-            android:thumb="@drawable/seekbar_thumb" />
-
-        <TextView
-            android:id="@+id/video_total_time_tv"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="00:00"
-            android:textColor="@android:color/white"
-            android:textSize="14sp" />
-
-        <TextView
-            android:id="@+id/video_full_screen_tv"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_marginLeft="12dp"
-            android:layout_marginRight="12dp"
-            android:drawableLeft="@drawable/ic_full_screen" />
-
-    </LinearLayout>
+        android:layout_alignParentBottom="true"
+        android:visibility="gone" />
 
 </RelativeLayout>

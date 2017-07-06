@@ -10,7 +10,6 @@ import android.support.annotation.Nullable;
 import android.support.v4.app.FragmentActivity;
 import android.support.v7.app.ActionBar;
 import android.support.v7.app.AppCompatActivity;
-import android.util.Log;
 import android.view.Window;
 import android.view.WindowManager;
 
@@ -29,15 +28,28 @@ public class ControllerUtil {
         return audioManager.getStreamVolume(AudioManager.STREAM_MUSIC);
     }
 
-    public static void setVolume(Context context,int volume) {
+    public static int getMaxVolume(Context context) {
         AudioManager audioManager = (AudioManager) context.getSystemService(AUDIO_SERVICE);
-        int maxVolume = audioManager.getStreamMaxVolume(AudioManager.STREAM_MUSIC);
-        if (volume >= 0 && volume <= maxVolume) {
-            audioManager.setStreamVolume(AudioManager.STREAM_MUSIC, volume, AudioManager.FLAG_PLAY_SOUND);
-        }
+        return audioManager.getStreamMaxVolume(AudioManager.STREAM_MUSIC);
     }
 
-    public static @IntRange(from = 0,to = 255) int getScreenBrightness(Context context){
+    public static void setVolume(Context context, int volume) {
+        AudioManager audioManager = (AudioManager) context.getSystemService(AUDIO_SERVICE);
+        int maxVolume = audioManager.getStreamMaxVolume(AudioManager.STREAM_MUSIC);
+        int currentVolume = volume;
+        if (volume < 0) {
+            currentVolume = 0;
+        }
+
+        if (volume > maxVolume) {
+            currentVolume = maxVolume;
+        }
+        audioManager.setStreamVolume(AudioManager.STREAM_MUSIC, currentVolume, AudioManager.FLAG_PLAY_SOUND);
+    }
+
+    public static
+    @IntRange(from = 0, to = 255)
+    int getScreenBrightness(Context context) {
         try {
             return Settings.System.getInt(
                     context.getContentResolver(), Settings.System.SCREEN_BRIGHTNESS);
@@ -47,7 +59,9 @@ public class ControllerUtil {
         return 0;
     }
 
-    public static int getActivityBrightness(Context context) {
+    public static
+    @IntRange(from = 0, to = 255)
+    int getActivityBrightness(Context context) {
         Activity activity = getActivity(context);
         if (activity == null) {
             return 0;
@@ -61,13 +75,13 @@ public class ControllerUtil {
         if (lp.screenBrightness < 0 || lp.screenBrightness > 1) {
             return getScreenBrightness(context);
 
-        }else{
+        } else {
             return (int) (lp.screenBrightness * 255);
         }
     }
 
     public static void setActivityBrightness(Context context,
-                                             @IntRange(from = 0,to = 255) int brightness) {
+                                             @IntRange(from = 0, to = 255) int brightness) {
         Activity activity = getActivity(context);
         if (activity == null) {
             return;
@@ -81,7 +95,6 @@ public class ControllerUtil {
         if (brightness < 0 || brightness > 255) {
             return;
         }
-        Log.d("controller", "brightness:" + brightness);
         WindowManager.LayoutParams lp = window.getAttributes();
         lp.screenBrightness = brightness * (1f / 255f); //0~1
         window.setAttributes(lp);
@@ -91,7 +104,9 @@ public class ControllerUtil {
         return Math.round(px / context.getResources().getDisplayMetrics().density);
     }
 
-    public static @Nullable Activity getActivity(Context context) {
+    public static
+    @Nullable
+    Activity getActivity(Context context) {
         if (context == null) return null;
         if (context instanceof Activity) {
             return (Activity) context;
@@ -102,19 +117,25 @@ public class ControllerUtil {
     }
 
     public static String formatTime(long duration) {
-        int totalSecond = (int) (duration / 1000) + (duration % 1000 < 500 ? 0 : 1);
+        return formatTime(false,duration);
+    }
+
+    public static String formatTime(boolean hasSymbol, long duration) {
+        long absDuration = Math.abs(duration);
+        String symbol = duration > 0 ? (hasSymbol ? "+" : "") : (duration == 0 ? "" : "-");
+        int totalSecond = (int) (absDuration / 1000) + (absDuration % 1000 < 500 ? 0 : 1);
         int h = totalSecond / 3600;
         int m = totalSecond % 3600 / 60;
         int s = totalSecond % 3600 % 60;
         if (h > 0) {
-            return String.format(Locale.CHINESE,"%02d:%02d:%02d", h, m, s);
+            return String.format(Locale.CHINESE, "%s%02d:%02d:%02d", symbol, h, m, s);
 
-        }else{
-            return String.format(Locale.CHINESE,"%02d:%02d", m, s);
+        } else {
+            return String.format(Locale.CHINESE, "%s%02d:%02d", symbol, m, s);
         }
     }
 
-    public static void toggleActionBarAndStatusBar(Context context,boolean fullScreen) {
+    public static void toggleActionBarAndStatusBar(Context context, boolean fullScreen) {
         Activity activity = getActivity(context);
         if (activity == null) {
             return;

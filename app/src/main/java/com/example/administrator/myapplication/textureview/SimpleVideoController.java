@@ -1,10 +1,9 @@
 package com.example.administrator.myapplication.textureview;
 
 import android.annotation.TargetApi;
-import android.app.Activity;
 import android.content.Context;
-import android.content.pm.ActivityInfo;
 import android.os.Build;
+import android.os.Handler;
 import android.support.annotation.AttrRes;
 import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
@@ -14,33 +13,23 @@ import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.FrameLayout;
-import android.widget.LinearLayout;
-import android.widget.SeekBar;
-import android.widget.TextView;
-import android.widget.ViewSwitcher;
 
 import com.example.administrator.myapplication.R;
-
-import java.text.MessageFormat;
-
-import static android.view.ViewGroup.LayoutParams.MATCH_PARENT;
 
 /**
  * Created by cai.jia on 2017/7/2.
  */
-public class SimpleVideoController extends GestureVideoController implements Controller, View.OnClickListener, SeekBar.OnSeekBarChangeListener {
+public class SimpleVideoController extends GestureVideoController implements
+        Controller, ControllerSwitcher.OnPlayStateListener,
+        ControllerBottomBar.OnPlayProgressChangeListener, View.OnClickListener {
 
-    private TextView videoStartPauseTv;
-    private FrameLayout videoStartPauseFl;
-    private TextView videoVoiceTv;
-    private TextView videoCurrentTimeTv;
-    private SeekBar videoPlayProgressSeekBar;
-    private TextView videoTotalTimeTv;
-    private TextView videoFullScreenTv;
-    private LinearLayout videoBottomBarLl;
     private FrameLayout videoProgressFl;
-    private TextView videoNetSpeedTv;
-    private ViewSwitcher viewSwitcher;
+    private ControllerSwitcher controllerSwitcher;
+    private ControllerBottomBar controllerBottomBar;
+    private VideoView videoView;
+    private String videoUrl;
+    private boolean isShowController;
+    private Handler handler;
 
     public SimpleVideoController(@NonNull Context context) {
         this(context, null);
@@ -65,174 +54,135 @@ public class SimpleVideoController extends GestureVideoController implements Con
 
     private void init(Context context) {
         LayoutInflater.from(context).inflate(R.layout.video_controller, this, true);
-        videoStartPauseTv = (TextView) findViewById(R.id.video_start_pause_tv);
-        videoStartPauseFl = (FrameLayout) findViewById(R.id.video_start_pause_fl);
-        videoVoiceTv = (TextView) findViewById(R.id.video_voice_tv);
-        videoCurrentTimeTv = (TextView) findViewById(R.id.video_current_time_tv);
-        videoPlayProgressSeekBar = (SeekBar) findViewById(R.id.video_play_progress_seek_bar);
-        videoTotalTimeTv = (TextView) findViewById(R.id.video_total_time_tv);
-        videoFullScreenTv = (TextView) findViewById(R.id.video_full_screen_tv);
-        videoBottomBarLl = (LinearLayout) findViewById(R.id.video_bottom_bar_ll);
-        videoProgressFl = (FrameLayout) findViewById(R.id.video_progress_fl);
-        videoNetSpeedTv = (TextView) findViewById(R.id.video_net_speed_tv);
-        viewSwitcher = (ViewSwitcher) findViewById(R.id.view_switcher);
-
-        videoStartPauseFl.setOnClickListener(this);
-        videoVoiceTv.setOnClickListener(this);
-        videoFullScreenTv.setOnClickListener(this);
-        videoPlayProgressSeekBar.setOnSeekBarChangeListener(this);
-        setOnClickListener(this);
+        controllerSwitcher = (ControllerSwitcher) findViewById(R.id.view_switcher);
+        controllerBottomBar = (ControllerBottomBar) findViewById(R.id.controller_bottom_bar);
+        controllerSwitcher.setOnPlayStateListener(this);
+        controllerBottomBar.setOnPlayProgressChangeListener(this);
+        this.setOnClickListener(this);
+        handler = new Handler();
     }
 
-    private VideoView videoView;
-
-    private int currentBrightness;
-
-    public void onLeftVerticalMove(@MoveState int state,float distance) {
+    public void onLeftVerticalMove(@MoveState int state, float distance,float deltaY) {
         int dp = ControllerUtil.spToDp(getContext(), distance);
         int brightness = dp * 2;
         switch (state) {
-            case GestureVideoController.START:{
-                viewSwitcher.setVisibility(VISIBLE);
-                viewSwitcher.setDisplayedChild(0);
-                currentBrightness = ControllerUtil.getActivityBrightness(getContext());
-                ControllerUtil.setActivityBrightness(getContext(), currentBrightness + brightness);
+            case GestureVideoController.START:
+                controllerSwitcher.startSetBrightness();
                 break;
-            }
 
-            case GestureVideoController.MOVE:{
-                ControllerUtil.setActivityBrightness(getContext(), currentBrightness + brightness);
+            case GestureVideoController.MOVE:
+                controllerSwitcher.incrementBrightness(brightness);
                 break;
-            }
 
-            case GestureVideoController.END:{
-                viewSwitcher.setVisibility(GONE);
-                ControllerUtil.setActivityBrightness(getContext(), currentBrightness + brightness);
+            case GestureVideoController.END:
+                controllerSwitcher.hide();
                 break;
-            }
         }
     }
 
-    private int currentVolume;
-
-    public void onRightVerticalMove(@MoveState int state,float distance) {
+    public void onRightVerticalMove(@MoveState int state, float distance,float deltaY) {
         int dp = ControllerUtil.spToDp(getContext(), distance);
         int volume = (int) (dp * 0.1f);
         switch (state) {
-            case GestureVideoController.START:{
-                viewSwitcher.setVisibility(VISIBLE);
-                viewSwitcher.setDisplayedChild(1);
-                currentVolume = ControllerUtil.getVolume(getContext());
-                ControllerUtil.setVolume(getContext(), currentVolume + volume);
+            case GestureVideoController.START:
+                controllerSwitcher.startSetVolume();
                 break;
-            }
 
-            case GestureVideoController.MOVE:{
-                ControllerUtil.setVolume(getContext(), currentVolume + volume);
+            case GestureVideoController.MOVE:
+                controllerSwitcher.incrementVolume(volume);
                 break;
-            }
 
-            case GestureVideoController.END:{
-                viewSwitcher.setVisibility(GONE);
-                ControllerUtil.setVolume(getContext(), currentVolume + volume);
+            case GestureVideoController.END:
+                controllerSwitcher.hide();
                 break;
-            }
         }
     }
 
-    private int currentProgress;
-    private boolean horizontalMove;
-
-    public void onHorizontalMove(@MoveState int state,float distance) {
+    public void onHorizontalMove(@MoveState int state, float distance,float deltaX) {
         int dp = ControllerUtil.spToDp(getContext(), distance);
         int time = Math.round(dp * 0.5f) * 1000;
         switch (state) {
-            case GestureVideoController.START:{
-                horizontalMove = true;
-                currentProgress = videoPlayProgressSeekBar.getProgress();
-                videoPlayProgressSeekBar.setProgress(currentProgress + time);
+            case GestureVideoController.START:
+                int currentProgress = controllerBottomBar.getProgress();
+                int max = controllerBottomBar.getMax();
+                controllerSwitcher.startTimeProgress(currentProgress, max);
                 break;
-            }
 
-            case GestureVideoController.MOVE:{
-                videoPlayProgressSeekBar.setProgress(currentProgress + time);
+            case GestureVideoController.MOVE:
+                controllerSwitcher.incrementTimeProgress(time);
+                long currentTime = controllerSwitcher.getCurrentProgress();
+                controllerBottomBar.setProgress((int) (currentTime + time));
                 break;
-            }
 
-            case GestureVideoController.END:{
-                horizontalMove = false;
-                videoPlayProgressSeekBar.setProgress(currentProgress + time);
-                videoView.seekTo(videoPlayProgressSeekBar.getProgress());
+            case GestureVideoController.END:
+                controllerSwitcher.stopTimeProgress();
+                videoView.seekTo(controllerBottomBar.getProgress());
                 break;
-            }
         }
     }
 
     @Override
     public void onPreparing() {
-        videoProgressFl.setVisibility(VISIBLE);
+//        videoProgressFl.setVisibility(VISIBLE);
     }
 
     @Override
     public void onPrepared() {
-        videoProgressFl.setVisibility(GONE);
+        controllerSwitcher.setVideoPrepared(true);
+        controllerBottomBar.setVideoPrepared(true);
+//        videoProgressFl.setVisibility(GONE);
         videoView.start(videoUrl);
     }
 
     @Override
     public void onStart() {
-        videoStartPauseTv.setSelected(true);
+        showController();
+        controllerSwitcher.setPlayingState(true);
     }
 
     @Override
     public void onPause() {
-        videoStartPauseTv.setSelected(false);
+        controllerSwitcher.setPlayingState(false);
     }
 
     @Override
     public void onCompletion() {
-        videoStartPauseTv.setSelected(false);
+        controllerSwitcher.setPlayingState(false);
     }
 
     @Override
     public void onError() {
-        videoStartPauseTv.setSelected(false);
+        controllerSwitcher.setPlayingState(false);
     }
-
-    private boolean isPlaying;
 
     @Override
     public void onBufferStart(int speed) {
-        isPlaying = videoStartPauseTv.isSelected();
-        videoStartPauseTv.setSelected(false);
-        videoProgressFl.setVisibility(VISIBLE);
-        videoNetSpeedTv.setText(MessageFormat.format("{0}k/s", speed));
+        controllerSwitcher.setPlayingState(false);
+//        videoProgressFl.setVisibility(VISIBLE);
+//        videoNetSpeedTv.setText(MessageFormat.format("{0}k/s", speed));
     }
 
     @Override
     public void onBufferEnd(int speed) {
-        videoProgressFl.setVisibility(GONE);
-        videoStartPauseTv.setSelected(isPlaying);
-        if (isPlaying) {
-            videoView.start(videoUrl);
-
-        }else{
-            videoView.pause();
-        }
+//        videoProgressFl.setVisibility(GONE);
+        boolean isPlaying = controllerSwitcher.isPlaying();
+        controllerSwitcher.setPlayingState(isPlaying);
+        setPlaying(isPlaying);
     }
 
     @Override
     public void onPlayProgress(long progress, long total) {
-        videoPlayProgressSeekBar.setMax((int) total);
-        if (!horizontalMove) {
-            videoPlayProgressSeekBar.setProgress((int) progress);
+        controllerBottomBar.setMax((int) total);
+        boolean gestureTimeProgress = controllerSwitcher.isGestureTimeProgress();
+        if (!gestureTimeProgress) {
+            controllerBottomBar.setProgress((int) progress);
         }
     }
 
     @Override
     public void onBufferingUpdate(int percent) {
-        int secondaryProgress = Math.round(videoPlayProgressSeekBar.getMax() * percent * 0.01f);
-        videoPlayProgressSeekBar.setSecondaryProgress(secondaryProgress);
+        int secondaryProgress = Math.round(controllerBottomBar.getMax() * percent * 0.01f);
+        controllerBottomBar.setSecondaryProgress(secondaryProgress);
     }
 
     @Override
@@ -242,17 +192,26 @@ public class SimpleVideoController extends GestureVideoController implements Con
 
     @Override
     public void showController() {
-        videoBottomBarLl.setVisibility(VISIBLE);
+        controllerBottomBar.show();
+        controllerSwitcher.show();
+        isShowController = true;
+        handler.removeCallbacks(hideControllerTask);
+        handler.postDelayed(hideControllerTask, 4000);
     }
+
+    private Runnable hideControllerTask = new Runnable() {
+        @Override
+        public void run() {
+            hideController();
+        }
+    };
 
     @Override
     public void hideController() {
-        videoBottomBarLl.setVisibility(GONE);
+        controllerBottomBar.hide();
+        controllerSwitcher.hide();
+        isShowController = false;
     }
-
-    private String videoUrl;
-    private ViewGroup videoContainerParent;
-    private ViewGroup videoContainer;
 
     @Override
     public void setVideoUrl(String videoUrl) {
@@ -260,79 +219,37 @@ public class SimpleVideoController extends GestureVideoController implements Con
     }
 
     @Override
-    public void setParentLayout(ViewGroup parent,ViewGroup container) {
-        this.videoContainerParent = parent;
-        this.videoContainer = container;
+    public void setParentLayout(ViewGroup parent, ViewGroup container) {
+        controllerBottomBar.setFullScreenLayout(parent, container);
+    }
+
+    private void setPlaying(boolean isPlaying) {
+        if (isPlaying) {
+            videoView.pause();
+
+        } else {
+            videoView.start(videoUrl);
+        }
     }
 
     @Override
-    public void onClick(View view) {
-        if (view == videoStartPauseFl) {
-            boolean isPlaying = videoStartPauseTv.isSelected();
-            if (isPlaying) {
-                videoView.pause();
+    public void onPlayState(boolean isPlaying) {
+        setPlaying(isPlaying);
+    }
 
-            }else{
-                videoView.start(videoUrl);
-            }
+    @Override
+    public void onPlayProgressChange(int progress) {
+        videoView.seekTo(progress);
+    }
 
-        } else if (view == videoVoiceTv) {
-
-
-        } else if (view == videoFullScreenTv) {
-            toggleFullScreen();
-
-        } else if (view == this) {
-            isShowController = !isShowController;
+    @Override
+    public void onClick(View v) {
+        if (v == this) {
             if (isShowController) {
                 hideController();
-            }else{
+            } else {
                 showController();
             }
         }
-    }
-
-    private boolean isShowController;
-
-    private void toggleFullScreen() {
-        if (videoContainerParent == null || videoContainer == null) {
-            return;
-        }
-
-        int index = videoContainerParent.indexOfChild(videoContainer);
-        boolean notFullScreen = index != -1;
-        Activity activity = ControllerUtil.getActivity(getContext());
-        if (activity == null) {
-            return;
-        }
-
-        ViewGroup content = (ViewGroup) activity.findViewById(android.R.id.content);
-        if (notFullScreen) {
-            videoContainerParent.removeView(videoContainer);
-            content.addView(videoContainer, MATCH_PARENT, MATCH_PARENT);
-            ControllerUtil.toggleActionBarAndStatusBar(getContext(),true);
-            activity.setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_LANDSCAPE);
-
-        }else{
-            content.removeView(videoContainer);
-            videoContainerParent.addView(videoContainer, MATCH_PARENT, MATCH_PARENT);
-            ControllerUtil.toggleActionBarAndStatusBar(getContext(),false);
-            activity.setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_PORTRAIT);
-        }
-    }
-
-    @Override
-    public void onProgressChanged(SeekBar seekBar, int progress, boolean fromUser) {
-        videoCurrentTimeTv.setText(ControllerUtil.formatTime(progress));
-        videoTotalTimeTv.setText(ControllerUtil.formatTime(seekBar.getMax()));
-    }
-
-    @Override
-    public void onStartTrackingTouch(SeekBar seekBar) {
-    }
-
-    @Override
-    public void onStopTrackingTouch(SeekBar seekBar) {
-        videoView.seekTo(seekBar.getProgress());
     }
 }

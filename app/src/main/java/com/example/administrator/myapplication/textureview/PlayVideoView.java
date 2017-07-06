@@ -7,6 +7,7 @@ import android.support.annotation.AttrRes;
 import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
 import android.support.annotation.StyleRes;
+import android.text.TextUtils;
 import android.util.AttributeSet;
 import android.view.View;
 import android.widget.FrameLayout;
@@ -42,29 +43,42 @@ public class PlayVideoView extends FrameLayout {
 
     private Controller controller;
     private VideoView videoView;
+    private FrameLayout videoContainer;
 
     private void init(Context context, AttributeSet attrs) {
         LayoutParams p = new LayoutParams(MATCH_PARENT, MATCH_PARENT);
-        FrameLayout container = new FrameLayout(context);
-        addView(container, p);
+        videoContainer = new FrameLayout(context);
+        addView(videoContainer, p);
 
         videoView = new VideoView(context);
-        container.addView(videoView, p);
+        videoContainer.addView(videoView, p);
 
-        controller = new SimpleVideoController(context);
-        container.addView((View) controller, p);
-        controller.setParentLayout(this,container);
+        setPlayController(new SimpleVideoController(context));
+    }
+
+    public void setPlayController(Controller controller) {
+        if (this.controller != null) {
+            videoContainer.removeView((View) this.controller);
+        }
+        this.controller = controller;
+
+        LayoutParams p = new LayoutParams(MATCH_PARENT, MATCH_PARENT);
+        videoContainer.addView((View) controller, p);
+        controller.setParentLayout(this,videoContainer);
 
         VideoControllerHelper helper = new VideoControllerHelper(controller);
         helper.attachVideoView(videoView);
+
+        if (!TextUtils.isEmpty(videoUrl)) {
+            setVideoUrl(videoUrl);
+        }
     }
+
+    private String videoUrl;
 
     public void setVideoUrl(String videoUrl) {
+        this.videoUrl = videoUrl;
         controller.setVideoUrl(videoUrl);
-    }
-
-    public void start(String videoUrl) {
-        videoView.start(videoUrl);
     }
 
     @Override

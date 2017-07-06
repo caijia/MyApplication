@@ -125,7 +125,7 @@ public class VideoView extends TextureView implements TextureView.SurfaceTexture
     }
 
     public void destroy() {
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.JELLY_BEAN && surfaceTexture != null) {
+        if (surfaceTexture != null) {
             surfaceTexture.release();
         }
 

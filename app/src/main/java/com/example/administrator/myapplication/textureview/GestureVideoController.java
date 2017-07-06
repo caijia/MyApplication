@@ -82,7 +82,7 @@ public abstract class GestureVideoController extends RelativeLayout {
                     orientation = HORIZONTAL;
                     initialX = distanceX > 0 ? initialX + touchSlop : initialX - touchSlop;
                     distanceX = x - initialX;
-                    onHorizontalMove(START,distanceX);
+                    onHorizontalMove(START,distanceX,0);
                     isFirst = true;
                 }
 
@@ -95,9 +95,9 @@ public abstract class GestureVideoController extends RelativeLayout {
                     distanceY = y - initialY;
 
                     if (left) {
-                        onLeftVerticalMove(START,-distanceY);
+                        onLeftVerticalMove(START,-distanceY,0);
                     }else{
-                        onRightVerticalMove(START,-distanceY);
+                        onRightVerticalMove(START,-distanceY,0);
                     }
                     isFirst = true;
                 }
@@ -110,17 +110,17 @@ public abstract class GestureVideoController extends RelativeLayout {
 
                 switch (orientation) {
                     case HORIZONTAL: {
-                        onHorizontalMove(MOVE,distanceX);
+                        onHorizontalMove(MOVE,distanceX,deltaX);
                         break;
                     }
 
                     case VERTICAL_LEFT: {
-                        onLeftVerticalMove(MOVE,-distanceY);
+                        onLeftVerticalMove(MOVE,-distanceY,-deltaY);
                         break;
                     }
 
                     case VERTICAL_RIGHT: {
-                        onRightVerticalMove(MOVE,-distanceY);
+                        onRightVerticalMove(MOVE,-distanceY,-deltaY);
                         break;
                     }
                 }
@@ -130,20 +130,22 @@ public abstract class GestureVideoController extends RelativeLayout {
             case MotionEvent.ACTION_UP: {
                 float distanceX = x - initialX;
                 float distanceY = y - initialY;
+                float deltaX = x - startX;
+                float deltaY = y - startY;
 
                 switch (orientation) {
                     case HORIZONTAL: {
-                        onHorizontalMove(END,distanceX);
+                        onHorizontalMove(END,distanceX,deltaX);
                         break;
                     }
 
                     case VERTICAL_LEFT: {
-                        onLeftVerticalMove(END,-distanceY);
+                        onLeftVerticalMove(END,-distanceY,-deltaY);
                         break;
                     }
 
                     case VERTICAL_RIGHT: {
-                        onRightVerticalMove(END,-distanceY);
+                        onRightVerticalMove(END,-distanceY,-deltaY);
                         break;
                     }
                 }
@@ -175,9 +177,9 @@ public abstract class GestureVideoController extends RelativeLayout {
     public @interface MoveState{
     }
 
-    public abstract void onLeftVerticalMove(@MoveState int state,float distance);
+    public abstract void onLeftVerticalMove(@MoveState int state,float distance,float deltaY);
 
-    public abstract void onRightVerticalMove(@MoveState int state,float distance);
+    public abstract void onRightVerticalMove(@MoveState int state,float distance,float deltaY);
 
-    public abstract void onHorizontalMove(@MoveState int state,float distance);
+    public abstract void onHorizontalMove(@MoveState int state,float distance,float deltaX);
 }
