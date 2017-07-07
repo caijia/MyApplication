@@ -31,7 +31,7 @@ public class ControllerBottomBar extends LinearLayout implements View.OnClickLis
     private TextView fullScreenTv;
     private ViewGroup videoContainerParent;
     private ViewGroup videoContainer;
-    private int currentVolume;
+    private int maxVolume;
 
     public ControllerBottomBar(Context context) {
         this(context, null);
@@ -64,7 +64,9 @@ public class ControllerBottomBar extends LinearLayout implements View.OnClickLis
         voiceTv.setOnClickListener(this);
         fullScreenTv.setOnClickListener(this);
         progressSeekBar.setOnSeekBarChangeListener(this);
+        maxVolume = ControllerUtil.getMaxVolume(context);
         setCurrentVolume(ControllerUtil.getVolume(context));
+        hide();
     }
 
     public void show() {
@@ -75,18 +77,11 @@ public class ControllerBottomBar extends LinearLayout implements View.OnClickLis
         setVisibility(GONE);
     }
 
-    @Override
-    public void setVisibility(int visibility) {
-        if (!videoPrepared) {
-            return;
-        }
-        super.setVisibility(visibility);
-    }
-
-    private boolean videoPrepared;
-
-    public void setVideoPrepared(boolean videoPrepared) {
-        this.videoPrepared = videoPrepared;
+    public void reset() {
+        currentTimeTv.setText("00:00");
+        totalTimeTv.setText("00:00");
+        progressSeekBar.setProgress(0);
+        progressSeekBar.setSecondaryProgress(0);
     }
 
     @Override
@@ -94,6 +89,8 @@ public class ControllerBottomBar extends LinearLayout implements View.OnClickLis
         if (v == voiceTv) {
             v.setSelected(!v.isSelected());
             boolean hasVolume = v.isSelected();
+            int currentVolume = ControllerUtil.getVolume(getContext());
+            currentVolume = currentVolume == 0 ? maxVolume / 3 : currentVolume;
             ControllerUtil.setVolume(getContext(), hasVolume ? currentVolume : 0);
 
         } else if (v == fullScreenTv) {
@@ -107,9 +104,6 @@ public class ControllerBottomBar extends LinearLayout implements View.OnClickLis
     }
 
     private void toggleFullScreen() {
-        if (!videoPrepared) {
-            return;
-        }
         if (videoContainerParent == null || videoContainer == null) {
             return;
         }
@@ -136,34 +130,24 @@ public class ControllerBottomBar extends LinearLayout implements View.OnClickLis
         }
     }
 
-    public void setCurrentVolume(int currentVolume) {
-        this.currentVolume = currentVolume;
+    private void setCurrentVolume(int currentVolume) {
         boolean hasVolume = currentVolume > 0;
         voiceTv.setSelected(hasVolume);
     }
 
     public void setProgress(long progress) {
-        if (!videoPrepared) {
-            return;
-        }
         String currentTime = ControllerUtil.formatTime(progress);
         currentTimeTv.setText(currentTime);
         progressSeekBar.setProgress((int) progress);
     }
 
     public void setMax(long max) {
-        if (!videoPrepared) {
-            return;
-        }
         String totalTime = ControllerUtil.formatTime(max);
         totalTimeTv.setText(totalTime);
         progressSeekBar.setMax((int) max);
     }
 
     public void setSecondaryProgress(int secondaryProgress) {
-        if (!videoPrepared) {
-            return;
-        }
         progressSeekBar.setSecondaryProgress(secondaryProgress);
     }
 

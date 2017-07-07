@@ -286,8 +286,4 @@ public class MediaPlayerHelper implements IjkMediaPlayer.OnPreparedListener,
         }
         return 0;
     }
-
-    public boolean isPause() {
-        return currentState == STATE_PAUSED;
-    }
 }

@@ -12,6 +12,10 @@ public class VideoControllerHelper implements OnPlayMediaListener {
         this.controller = controller;
     }
 
+    public void setController(Controller controller) {
+        this.controller = controller;
+    }
+
     public void attachVideoView(VideoView videoView) {
         videoView.setOnPlayMediaListener(this);
         if (controller != null) {

@@ -35,7 +35,6 @@ public class ControllerSwitcher extends FrameLayout implements View.OnClickListe
     private TextView totalTimeTv;
     private ProgressBar timeProgressBar;
     private View[] viewArray;
-    private boolean videoPrepared;
     private OnPlayStateListener onPlayStateListener;
     private int volume;
     private int brightness;
@@ -88,14 +87,6 @@ public class ControllerSwitcher extends FrameLayout implements View.OnClickListe
     }
 
     @Override
-    public void setVisibility(int visibility) {
-        if (!videoPrepared) {
-            return;
-        }
-        super.setVisibility(visibility);
-    }
-
-    @Override
     public void onClick(View v) {
         if (v == startPauseTv) {
             boolean isPlaying = v.isSelected();
@@ -103,10 +94,6 @@ public class ControllerSwitcher extends FrameLayout implements View.OnClickListe
                 onPlayStateListener.onPlayState(isPlaying);
             }
         }
-    }
-
-    public void setVideoPrepared(boolean videoPrepared) {
-        this.videoPrepared = videoPrepared;
     }
 
     public void show() {
@@ -123,9 +110,6 @@ public class ControllerSwitcher extends FrameLayout implements View.OnClickListe
     }
 
     private void setVisibleState(int state) {
-        if (!videoPrepared) {
-            return;
-        }
         if (state < 0 || state > 3) {
             return;
         }
@@ -137,9 +121,6 @@ public class ControllerSwitcher extends FrameLayout implements View.OnClickListe
     }
 
     public void setPlayingState(boolean isPlaying) {
-        if (!videoPrepared) {
-            return;
-        }
         if (isPlaying) {
             setPlayStartState();
         } else {
@@ -148,17 +129,11 @@ public class ControllerSwitcher extends FrameLayout implements View.OnClickListe
     }
 
     private void setPlayStartState() {
-        if (!videoPrepared) {
-            return;
-        }
         setVisibleState(STATE_START_PAUSE);
         startPauseTv.setSelected(true);
     }
 
     private void setPlayStopState() {
-        if (!videoPrepared) {
-            return;
-        }
         setVisibleState(STATE_START_PAUSE);
         startPauseTv.setSelected(false);
     }
@@ -168,35 +143,23 @@ public class ControllerSwitcher extends FrameLayout implements View.OnClickListe
     }
 
     public void startSetVolume() {
-        if (!videoPrepared) {
-            return;
-        }
         setVisibleState(STATE_VOLUME);
         volume = ControllerUtil.getVolume(getContext());
     }
 
     public void incrementVolume(int incrementVolume) {
-        if (!videoPrepared) {
-            return;
-        }
         setVisibleState(STATE_VOLUME);
         int currentVolume = volume + incrementVolume;
         volumeProgressBar.setProgress(currentVolume + incrementVolume);
-//        ControllerUtil.setVolume(getContext(),currentVolume);
+        ControllerUtil.setVolume(getContext(), currentVolume);
     }
 
     public void startSetBrightness() {
-        if (!videoPrepared) {
-            return;
-        }
         setVisibleState(STATE_BRIGHTNESS);
         brightness = ControllerUtil.getActivityBrightness(getContext());
     }
 
     public void incrementBrightness(int incrementBrightness) {
-        if (!videoPrepared) {
-            return;
-        }
         setVisibleState(STATE_BRIGHTNESS);
         int currentBrightness = brightness + incrementBrightness;
         brightnessProgressBar.setProgress(currentBrightness);
@@ -212,9 +175,6 @@ public class ControllerSwitcher extends FrameLayout implements View.OnClickListe
     }
 
     public void startTimeProgress(long currentProgress, long total) {
-        if (!videoPrepared) {
-            return;
-        }
         this.currentProgress = currentProgress;
         isGestureTimeProgress = true;
         setVisibleState(STATE_PROGRESS);
@@ -227,9 +187,6 @@ public class ControllerSwitcher extends FrameLayout implements View.OnClickListe
     }
 
     public void incrementTimeProgress(long progress) {
-        if (!videoPrepared) {
-            return;
-        }
         setVisibleState(STATE_PROGRESS);
         String currentTime = ControllerUtil.formatTime(currentProgress + progress);
         String incrementTime = ControllerUtil.formatTime(true, progress);
@@ -239,9 +196,6 @@ public class ControllerSwitcher extends FrameLayout implements View.OnClickListe
     }
 
     public void stopTimeProgress() {
-        if (!videoPrepared) {
-            return;
-        }
         setVisibility(GONE);
         isGestureTimeProgress = false;
     }

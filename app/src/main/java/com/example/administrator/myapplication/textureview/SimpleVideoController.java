@@ -12,7 +12,6 @@ import android.util.AttributeSet;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
-import android.widget.FrameLayout;
 
 import com.example.administrator.myapplication.R;
 
@@ -23,7 +22,7 @@ public class SimpleVideoController extends GestureVideoController implements
         Controller, ControllerSwitcher.OnPlayStateListener,
         ControllerBottomBar.OnPlayProgressChangeListener, View.OnClickListener {
 
-    private FrameLayout videoProgressFl;
+    private ControllerLoading controllerLoading;
     private ControllerSwitcher controllerSwitcher;
     private ControllerBottomBar controllerBottomBar;
     private VideoView videoView;
@@ -54,6 +53,7 @@ public class SimpleVideoController extends GestureVideoController implements
 
     private void init(Context context) {
         LayoutInflater.from(context).inflate(R.layout.video_controller, this, true);
+        controllerLoading = (ControllerLoading) findViewById(R.id.controller_loading);
         controllerSwitcher = (ControllerSwitcher) findViewById(R.id.view_switcher);
         controllerBottomBar = (ControllerBottomBar) findViewById(R.id.controller_bottom_bar);
         controllerSwitcher.setOnPlayStateListener(this);
@@ -63,6 +63,9 @@ public class SimpleVideoController extends GestureVideoController implements
     }
 
     public void onLeftVerticalMove(@MoveState int state, float distance,float deltaY) {
+        if (!isPrepared) {
+            return;
+        }
         int dp = ControllerUtil.spToDp(getContext(), distance);
         int brightness = dp * 2;
         switch (state) {
@@ -81,6 +84,9 @@ public class SimpleVideoController extends GestureVideoController implements
     }
 
     public void onRightVerticalMove(@MoveState int state, float distance,float deltaY) {
+        if (!isPrepared) {
+            return;
+        }
         int dp = ControllerUtil.spToDp(getContext(), distance);
         int volume = (int) (dp * 0.1f);
         switch (state) {
@@ -99,6 +105,9 @@ public class SimpleVideoController extends GestureVideoController implements
     }
 
     public void onHorizontalMove(@MoveState int state, float distance,float deltaX) {
+        if (!isPrepared) {
+            return;
+        }
         int dp = ControllerUtil.spToDp(getContext(), distance);
         int time = Math.round(dp * 0.5f) * 1000;
         switch (state) {
@@ -123,14 +132,16 @@ public class SimpleVideoController extends GestureVideoController implements
 
     @Override
     public void onPreparing() {
-//        videoProgressFl.setVisibility(VISIBLE);
+        controllerSwitcher.hide();
+        controllerLoading.show();
     }
+
+    private boolean isPrepared;
 
     @Override
     public void onPrepared() {
-        controllerSwitcher.setVideoPrepared(true);
-        controllerBottomBar.setVideoPrepared(true);
-//        videoProgressFl.setVisibility(GONE);
+        isPrepared = true;
+        controllerLoading.hide();
         videoView.start(videoUrl);
     }
 
@@ -158,13 +169,13 @@ public class SimpleVideoController extends GestureVideoController implements
     @Override
     public void onBufferStart(int speed) {
         controllerSwitcher.setPlayingState(false);
-//        videoProgressFl.setVisibility(VISIBLE);
-//        videoNetSpeedTv.setText(MessageFormat.format("{0}k/s", speed));
+        controllerSwitcher.hide();
+        controllerLoading.setNetSpeed(speed);
     }
 
     @Override
     public void onBufferEnd(int speed) {
-//        videoProgressFl.setVisibility(GONE);
+        controllerLoading.hide();
         boolean isPlaying = controllerSwitcher.isPlaying();
         controllerSwitcher.setPlayingState(isPlaying);
         setPlaying(isPlaying);
@@ -223,6 +234,15 @@ public class SimpleVideoController extends GestureVideoController implements
         controllerBottomBar.setFullScreenLayout(parent, container);
     }
 
+    @Override
+    public void release() {
+        handler.removeCallbacks(hideControllerTask);
+        controllerBottomBar.hide();
+//        controllerBottomBar.reset();
+        controllerLoading.hide();
+        controllerSwitcher.show();
+    }
+
     private void setPlaying(boolean isPlaying) {
         if (isPlaying) {
             videoView.pause();
@@ -245,6 +265,9 @@ public class SimpleVideoController extends GestureVideoController implements
     @Override
     public void onClick(View v) {
         if (v == this) {
+            if (!isPrepared) {
+                return;
+            }
             if (isShowController) {
                 hideController();
             } else {

@@ -44,6 +44,7 @@ public class PlayVideoView extends FrameLayout {
     private Controller controller;
     private VideoView videoView;
     private FrameLayout videoContainer;
+    private  VideoControllerHelper helper;
 
     private void init(Context context, AttributeSet attrs) {
         LayoutParams p = new LayoutParams(MATCH_PARENT, MATCH_PARENT);
@@ -66,7 +67,12 @@ public class PlayVideoView extends FrameLayout {
         videoContainer.addView((View) controller, p);
         controller.setParentLayout(this,videoContainer);
 
-        VideoControllerHelper helper = new VideoControllerHelper(controller);
+        if (helper == null) {
+            helper = new VideoControllerHelper(controller);
+
+        }else{
+            helper.setController(controller);
+        }
         helper.attachVideoView(videoView);
 
         if (!TextUtils.isEmpty(videoUrl)) {
@@ -78,14 +84,25 @@ public class PlayVideoView extends FrameLayout {
 
     public void setVideoUrl(String videoUrl) {
         this.videoUrl = videoUrl;
+        if (controller == null) {
+            return;
+        }
         controller.setVideoUrl(videoUrl);
     }
 
-    @Override
-    protected void onDetachedFromWindow() {
+    public void resumeInRecyclerView() {
         if (videoView != null) {
-            videoView.destroy();
+            videoView.resumeSurface();
         }
-        super.onDetachedFromWindow();
+    }
+
+    public void pauseInRecyclerView() {
+        if (videoView != null) {
+            videoView.pauseSurface();
+        }
+
+        if (controller != null) {
+            controller.release();
+        }
     }
 }

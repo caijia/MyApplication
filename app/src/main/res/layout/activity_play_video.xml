@@ -4,15 +4,8 @@
     android:layout_height="match_parent"
     android:orientation="vertical">
 
-    <FrameLayout
-        android:id="@+id/texture_parent_fl"
+    <android.support.v7.widget.RecyclerView
+        android:id="@+id/recycler_view"
         android:layout_width="match_parent"
-        android:layout_height="180dp">
-
-        <com.example.administrator.myapplication.textureview.PlayVideoView
-            android:id="@+id/play_video_view"
-            android:layout_width="match_parent"
-            android:layout_height="match_parent"/>
-
-    </FrameLayout>
+        android:layout_height="match_parent"/>
 </LinearLayout>

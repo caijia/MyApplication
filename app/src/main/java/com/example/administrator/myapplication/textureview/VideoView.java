@@ -31,6 +31,9 @@ public class VideoView extends TextureView implements TextureView.SurfaceTexture
 
     private int scaleType = CENTER_CROP;
     private int rotation;
+    private SurfaceTexture surfaceTexture;
+    private String videoUrl;
+    private boolean surfaceAvailable;
 
     public VideoView(@NonNull Context context) {
         this(context, null);
@@ -59,7 +62,11 @@ public class VideoView extends TextureView implements TextureView.SurfaceTexture
         setSurfaceTextureListener(this);
     }
 
-    private SurfaceTexture surfaceTexture;
+    @Override
+    protected void onAttachedToWindow() {
+        super.onAttachedToWindow();
+        playerHelper.setOnPlayMediaListener(this);
+    }
 
     @Override
     public void onSurfaceTextureAvailable(SurfaceTexture surfaceTexture, int width, int height) {
@@ -68,17 +75,13 @@ public class VideoView extends TextureView implements TextureView.SurfaceTexture
             this.surfaceTexture = surfaceTexture;
             surface = new Surface(this.surfaceTexture);
 
-        }else{
+        } else {
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.JELLY_BEAN) {
-                setSurfaceTexture(this.surfaceTexture);
-                if (isPause) {
-                    pause();
-
-                }else{
-                    start(videoUrl);
+                if (playerHelper.isInPlaybackState() && !isPauseSurface) {
+                    setSurfaceTexture(this.surfaceTexture);
                 }
 
-            }else{
+            } else {
                 surface = new Surface(surfaceTexture);
                 setSurface(surface);
                 start(videoUrl);
@@ -94,24 +97,25 @@ public class VideoView extends TextureView implements TextureView.SurfaceTexture
     @Override
     public boolean onSurfaceTextureDestroyed(SurfaceTexture surface) {
         surfaceAvailable = false;
-        isPause = isPause();
-        pause();
         return Build.VERSION.SDK_INT < Build.VERSION_CODES.JELLY_BEAN;
     }
-
-    private boolean isPause;
-    private String videoUrl;
-    private boolean surfaceAvailable;
 
     @Override
     public void onSurfaceTextureUpdated(SurfaceTexture surface) {
     }
 
-    private boolean isPause() {
-        if (playerHelper != null) {
-            return playerHelper.isPause();
+    private boolean isPauseSurface;
+
+    public void resumeSurface(){
+        isPauseSurface = false;
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.JELLY_BEAN && this.surfaceTexture != null) {
+            setSurfaceTexture(this.surfaceTexture);
         }
-        return false;
+    }
+
+    public void pauseSurface(){
+        isPauseSurface = true;
+        pause();
     }
 
     public void start(String url) {
@@ -124,13 +128,15 @@ public class VideoView extends TextureView implements TextureView.SurfaceTexture
         }
     }
 
-    public void destroy() {
+    public void release() {
         if (surfaceTexture != null) {
             surfaceTexture.release();
+            this.surfaceTexture = null;
         }
 
         if (surface != null) {
             surface.release();
+            surface = null;
         }
 
         if (playerHelper != null) {

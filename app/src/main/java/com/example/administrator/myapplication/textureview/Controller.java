@@ -33,4 +33,6 @@ public interface Controller {
     void showController();
 
     void hideController();
+
+    void release();
 }
