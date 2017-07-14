@@ -101,4 +101,11 @@ public class VideoControllerHelper implements OnPlayMediaListener {
             controller.onPreparing();
         }
     }
+
+    @Override
+    public void onRelease() {
+        if (controller != null) {
+            controller.onRelease();
+        }
+    }
 }

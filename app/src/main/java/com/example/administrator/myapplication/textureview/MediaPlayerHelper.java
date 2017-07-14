@@ -94,14 +94,15 @@ public class MediaPlayerHelper implements IjkMediaPlayer.OnPreparedListener,
     }
 
     public void stopPlayback() {
-        callback = null;
         if (mediaPlayer != null) {
             mediaPlayer.stop();
-            mediaPlayer.reset();
+//            mediaPlayer.reset();
             mediaPlayer.release();
             mediaPlayer = null;
             currentState = STATE_IDLE;
+            callback.onRelease();
         }
+        callback = null;
 
         if (progressHelper != null) {
             progressHelper.stop();

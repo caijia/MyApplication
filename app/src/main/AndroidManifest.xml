@@ -38,7 +38,13 @@
             android:name=".Main2Activity"
             android:label="@string/title_activity_main2"
             android:theme="@style/AppTheme.NoActionBar"></activity>
-        <activity android:name=".TestWidgetActivity"></activity>
+        <activity android:name=".TestWidgetActivity">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+
+                <category android:name="android.intent.category.LAUNCHER" />
+            </intent-filter>
+        </activity>
 
         <provider
             android:name="android.support.v4.content.FileProvider"
@@ -102,11 +108,11 @@
         <activity android:name=".textureview.PlayVideoActivity"
             android:hardwareAccelerated="true"
             android:configChanges="orientation|keyboardHidden|screenSize">
-            <intent-filter>
-                <action android:name="android.intent.action.MAIN" />
 
-                <category android:name="android.intent.category.LAUNCHER" />
-            </intent-filter>
+        </activity>
+
+        <activity android:name=".BMapActivity">
+
         </activity>
 
         <activity android:name=".recyclerview.tab.TabDemoActivity">

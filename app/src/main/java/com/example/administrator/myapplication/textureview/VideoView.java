@@ -29,11 +29,10 @@ public class VideoView extends TextureView implements TextureView.SurfaceTexture
     private Surface surface;
     private OnPlayMediaListener callback;
 
-    private int scaleType = CENTER_CROP;
+    private int scaleType = WRAP_CONTENT;
     private int rotation;
     private SurfaceTexture surfaceTexture;
     private String videoUrl;
-    private boolean surfaceAvailable;
 
     public VideoView(@NonNull Context context) {
         this(context, null);
@@ -70,18 +69,16 @@ public class VideoView extends TextureView implements TextureView.SurfaceTexture
 
     @Override
     public void onSurfaceTextureAvailable(SurfaceTexture surfaceTexture, int width, int height) {
-        surfaceAvailable = true;
         if (this.surfaceTexture == null) {
             this.surfaceTexture = surfaceTexture;
             surface = new Surface(this.surfaceTexture);
 
         } else {
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.JELLY_BEAN) {
-                if (playerHelper.isInPlaybackState() && !isPauseSurface) {
-                    setSurfaceTexture(this.surfaceTexture);
-                }
+                setSurfaceTexture(this.surfaceTexture);
 
             } else {
+                this.surfaceTexture = surfaceTexture;
                 surface = new Surface(surfaceTexture);
                 setSurface(surface);
                 start(videoUrl);
@@ -96,26 +93,33 @@ public class VideoView extends TextureView implements TextureView.SurfaceTexture
 
     @Override
     public boolean onSurfaceTextureDestroyed(SurfaceTexture surface) {
-        surfaceAvailable = false;
         return Build.VERSION.SDK_INT < Build.VERSION_CODES.JELLY_BEAN;
     }
 
     @Override
     public void onSurfaceTextureUpdated(SurfaceTexture surface) {
+        setVideoScaleType();
     }
 
-    private boolean isPauseSurface;
-
     public void resumeSurface(){
-        isPauseSurface = false;
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.JELLY_BEAN && this.surfaceTexture != null) {
+        if (surfaceTexture == null) {
+            return;
+        }
+
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.JELLY_BEAN) {
             setSurfaceTexture(this.surfaceTexture);
+
+        } else {
+            surface = new Surface(surfaceTexture);
+            setSurface(surface);
+            start(videoUrl);
         }
     }
 
     public void pauseSurface(){
-        isPauseSurface = true;
-        pause();
+        if (playerHelper != null) {
+            playerHelper.stopPlayback();
+        }
     }
 
     public void start(String url) {
@@ -123,7 +127,7 @@ public class VideoView extends TextureView implements TextureView.SurfaceTexture
             return;
         }
         videoUrl = url;
-        if (playerHelper != null && surfaceAvailable) {
+        if (playerHelper != null && surface != null) {
             playerHelper.start(url, surface);
         }
     }
@@ -213,6 +217,13 @@ public class VideoView extends TextureView implements TextureView.SurfaceTexture
             callback.onError(what, extra);
         }
         return true;
+    }
+
+    @Override
+    public void onRelease() {
+        if (callback != null) {
+            callback.onRelease();
+        }
     }
 
     @Override

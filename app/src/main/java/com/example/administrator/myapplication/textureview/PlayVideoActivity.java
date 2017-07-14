@@ -28,7 +28,7 @@ public class PlayVideoActivity extends Activity  {
     public List<String> getData() {
         List<String> list = new ArrayList<>();
         for (int i = 0; i < 15; i++) {
-            list.add(url);
+            list.add(url + (i == 0 ? "" : +i));
         }
         return list;
     }

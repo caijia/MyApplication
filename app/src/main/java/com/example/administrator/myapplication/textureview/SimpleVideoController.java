@@ -167,6 +167,11 @@ public class SimpleVideoController extends GestureVideoController implements
     }
 
     @Override
+    public void onRelease() {
+        controllerSwitcher.setPlayingState(false);
+    }
+
+    @Override
     public void onBufferStart(int speed) {
         controllerSwitcher.setPlayingState(false);
         controllerSwitcher.hide();
@@ -238,7 +243,6 @@ public class SimpleVideoController extends GestureVideoController implements
     public void release() {
         handler.removeCallbacks(hideControllerTask);
         controllerBottomBar.hide();
-//        controllerBottomBar.reset();
         controllerLoading.hide();
         controllerSwitcher.show();
     }

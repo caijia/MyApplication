@@ -25,4 +25,6 @@ public interface OnPlayMediaListener {
     void onPause();
 
     void onPreparing();
+
+    void onRelease();
 }

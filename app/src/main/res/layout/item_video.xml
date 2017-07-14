@@ -3,15 +3,16 @@
     android:orientation="vertical" android:layout_width="match_parent"
     android:layout_height="170dp">
 
-    <View
-        android:layout_width="match_parent"
-        android:layout_height="match_parent"
-        android:background="#339933"/>
-
 
     <com.example.administrator.myapplication.textureview.PlayVideoView
         android:id="@+id/play_video_view"
         android:layout_width="match_parent"
         android:layout_height="match_parent"/>
+
+    <View
+        android:layout_width="match_parent"
+        android:layout_height="1dp"
+        android:layout_gravity="bottom"
+        android:background="#339933"/>
 
 </FrameLayout>

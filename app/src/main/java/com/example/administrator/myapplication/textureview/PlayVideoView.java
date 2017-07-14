@@ -52,6 +52,7 @@ public class PlayVideoView extends FrameLayout {
         addView(videoContainer, p);
 
         videoView = new VideoView(context);
+        videoView.setBackgroundDrawable(null);
         videoContainer.addView(videoView, p);
 
         setPlayController(new SimpleVideoController(context));

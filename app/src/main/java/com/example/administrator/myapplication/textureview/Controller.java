@@ -18,6 +18,8 @@ public interface Controller {
 
     void onError();
 
+    void onRelease();
+
     void onPlayProgress(long progress, long total);
 
     void onBufferStart(int speed);
