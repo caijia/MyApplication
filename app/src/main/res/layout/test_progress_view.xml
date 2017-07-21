@@ -3,6 +3,11 @@
     android:orientation="vertical"
     android:layout_width="match_parent"
     android:layout_height="match_parent">
+
+   <com.example.administrator.myapplication.canvas.ClipImageView
+       android:id="@+id/clip_image_view"
+       android:layout_width="match_parent"
+       android:layout_height="match_parent" />
     
    <com.example.administrator.myapplication.widget.FiveView2
        android:id="@+id/recycler_view"

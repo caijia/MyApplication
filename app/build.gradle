@@ -69,4 +69,5 @@ dependencies {
     compile 'tv.danmaku.ijk.media:ijkplayer-x86:0.8.0'
     compile 'tv.danmaku.ijk.media:ijkplayer-x86_64:0.8.0'
     compile files('libs/BaiduLBS_Android.jar')
+    compile 'com.githang:clipimageview:0.1'
 }
