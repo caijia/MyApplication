@@ -1,14 +1,12 @@
 package com.example.administrator.myapplication;
 
+import android.content.Intent;
+import android.graphics.Bitmap;
 import android.os.Bundle;
-import android.os.Handler;
 import android.support.annotation.Nullable;
 import android.support.v7.app.AppCompatActivity;
-
-import com.example.administrator.myapplication.canvas.ClipImageView;
-
-import java.util.ArrayList;
-import java.util.List;
+import android.view.View;
+import android.widget.ImageView;
 
 /**
  * Created by cai.jia on 2017/1/3 0003
@@ -16,28 +14,34 @@ import java.util.List;
 
 public class TestWidgetActivity extends AppCompatActivity {
 
-    private ClipImageView clipImageView;
-
+    private ImageView clipResultIv;
     @Override
     protected void onCreate(@Nullable Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.test_progress_view);
-
-        clipImageView = (ClipImageView) findViewById(R.id.clip_image_view);
-        new Handler().postDelayed(new Runnable() {
-            @Override
-            public void run() {
-                clipImageView.setImageResource(R.drawable.test);
-            }
-        },5000);
-
+        clipResultIv = (ImageView) findViewById(R.id.clip_result_iv);
     }
 
-    public List<Integer> getData() {
-        List<Integer> list = new ArrayList<>();
-        for (int i = 0; i < 20; i++) {
-            list.add(i+50);
+    public void clipImage(View view) {
+        Intent i = new Intent(this, ClipImageActivity.class);
+        startActivityForResult(i, 200);
+    }
+
+    @Override
+    protected void onActivityResult(int requestCode, int resultCode, Intent data) {
+        super.onActivityResult(requestCode, resultCode, data);
+        if (resultCode != RESULT_OK) {
+            return;
         }
-        return list;
+
+        switch (requestCode) {
+            case 200:{
+                if (data != null && data.getExtras() != null) {
+                    Bitmap bitmap = data.getExtras().getParcelable(ClipImageActivity.CLIP_BITMAP);
+                    clipResultIv.setImageBitmap(bitmap);
+                }
+                break;
+            }
+        }
     }
 }

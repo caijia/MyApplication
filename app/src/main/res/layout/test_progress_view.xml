@@ -1,14 +1,21 @@
 <?xml version="1.0" encoding="utf-8"?>
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
     android:orientation="vertical"
     android:layout_width="match_parent"
     android:layout_height="match_parent">
 
-   <com.example.administrator.myapplication.canvas.ClipImageView
-       android:id="@+id/clip_image_view"
-       android:layout_width="match_parent"
-       android:layout_height="match_parent" />
-    
+   <ImageView
+       android:id="@+id/clip_result_iv"
+       android:layout_width="wrap_content"
+       android:layout_height="wrap_content" />
+
+   <Button
+       android:layout_width="wrap_content"
+       android:layout_height="wrap_content"
+       android:text="裁剪"
+       android:onClick="clipImage"/>
+
    <com.example.administrator.myapplication.widget.FiveView2
        android:id="@+id/recycler_view"
        android:layout_width="50dp"
