@@ -1,5 +1,7 @@
 package com.example.administrator.myapplication.canvas;
 
+import android.animation.Animator;
+import android.animation.AnimatorListenerAdapter;
 import android.animation.ValueAnimator;
 import android.content.Context;
 import android.graphics.Bitmap;
@@ -19,17 +21,16 @@ import android.support.annotation.DrawableRes;
 import android.support.annotation.Nullable;
 import android.support.v7.widget.AppCompatImageView;
 import android.util.AttributeSet;
-import android.util.Log;
 import android.view.GestureDetector;
 import android.view.MotionEvent;
 import android.view.ScaleGestureDetector;
-import android.view.ViewConfiguration;
 
 /**
  * Created by cai.jia on 2017/7/21 0021
  */
 
-public class ClipImageView extends AppCompatImageView implements ScaleGestureDetector.OnScaleGestureListener {
+public class ClipImageView extends AppCompatImageView implements
+        ScaleGestureDetector.OnScaleGestureListener, MoveGestureDetector.OnMoveGestureListener {
 
     private Xfermode xfermode;
     private Paint paint;
@@ -39,15 +40,20 @@ public class ClipImageView extends AppCompatImageView implements ScaleGestureDet
     private int clipBorderMargin;
     private float clipBorderAspect;
     private Rect clipBorderRect;
+    private ScaleGestureDetector scaleGestureDetector;
+    private MoveGestureDetector moveGestureDetector;
+    private GestureDetector gestureDetector;
+    private ValueAnimator transAnimator;
+    private float initScale;
+    private float minScale;
+    private float maxScale;
+    private Matrix imageMatrix = new Matrix();
     private Runnable adjustClipBorderAspectTask = new Runnable() {
         @Override
         public void run() {
             adjustClipBorderAspect();
         }
     };
-
-    private ScaleGestureDetector scaleGestureDetector;
-    private GestureDetector gestureDetector;
 
     public ClipImageView(Context context) {
         this(context, null);
@@ -63,21 +69,29 @@ public class ClipImageView extends AppCompatImageView implements ScaleGestureDet
         paint = new Paint(Paint.ANTI_ALIAS_FLAG);
         paint.setAntiAlias(true);
 
-        shadowColor = Color.parseColor("#aa000000");
-        clipBorderColor = Color.RED;
+        shadowColor = Color.parseColor("#bb000000");
+        clipBorderColor = Color.WHITE;
         clipBorderStrokeWidth = 3;
         clipBorderMargin = 90;
         clipBorderAspect = 1;
 
         xfermode = new PorterDuffXfermode(PorterDuff.Mode.DST_OUT);
         clipBorderRect = new Rect();
-        ViewConfiguration viewConfig = ViewConfiguration.get(context);
-        touchSlop = viewConfig.getScaledTouchSlop();
 
+        moveGestureDetector = new MoveGestureDetector(context, this);
         scaleGestureDetector = new ScaleGestureDetector(context, this);
-        gestureDetector = new GestureDetector(context, new GestureDetector.SimpleOnGestureListener(){
+        gestureDetector = new GestureDetector(context, new GestureDetector.SimpleOnGestureListener() {
             @Override
             public boolean onDoubleTap(MotionEvent e) {
+                //大于原始缩放值的2倍,自动缩放到初始值,反之,缩放到初始值的2倍
+                final float[] matrixValues = new float[9];
+                imageMatrix.getValues(matrixValues);
+                float scale = matrixValues[Matrix.MSCALE_X];
+                if (scale >= initScale * 2) {
+                    smoothScale(scale, initScale, e.getX(), e.getY());
+                }else{
+                 smoothScale(scale, initScale * 2, e.getX(), e.getY());
+                }
                 return true;
             }
         });
@@ -95,86 +109,17 @@ public class ClipImageView extends AppCompatImageView implements ScaleGestureDet
         clipBorderRect.bottom = clipBorderRect.top + clipBorderHeight;
     }
 
-    private float initialMotionX;
-    private float initialMotionY;
-    private int activePointerId;
-    private float lastTouchX;
-    private float lastTouchY;
-    private int touchSlop;
-    private boolean isBeginDragged;
-
     @Override
     public boolean onTouchEvent(MotionEvent event) {
         if (transAnimator != null && transAnimator.isRunning()) {
             return true;
         }
-
         if (gestureDetector.onTouchEvent(event)) {
             return true;
         }
         scaleGestureDetector.onTouchEvent(event);
-
-        switch (event.getActionMasked()) {
-            case MotionEvent.ACTION_DOWN:{
-                initialMotionX = lastTouchX = event.getX(0);
-                initialMotionY = lastTouchY = event.getY(0);
-                activePointerId = event.getPointerId(0);
-                break;
-            }
-
-            case MotionEvent.ACTION_POINTER_DOWN:{
-                int pointerIndex = event.getActionIndex();
-                activePointerId = event.getPointerId(pointerIndex);
-                lastTouchX = event.getX(pointerIndex);
-                lastTouchY = event.getY(pointerIndex);
-                break;
-            }
-
-            case MotionEvent.ACTION_MOVE:{
-                int pointerIndex = event.findPointerIndex(activePointerId);
-                if (pointerIndex < 0) {
-                    return true;
-                }
-
-                float x = event.getX(pointerIndex);
-                float y = event.getY(pointerIndex);
-                float dx = x - lastTouchX;
-                float dy = y - lastTouchY;
-                float distanceX = x - initialMotionX;
-                float distanceY = y - initialMotionY;
-                if (!isBeginDragged && Math.hypot(Math.abs(distanceX), Math.abs(distanceY)) > touchSlop) {
-                    isBeginDragged = true;
-                }
-                onScroll(dx,dy,distanceX, distanceY);
-                lastTouchX = x;
-                lastTouchY = y;
-                break;
-            }
-
-            case MotionEvent.ACTION_UP:{
-                activePointerId = -1;
-                isBeginDragged = false;
-                checkBoarder();
-                break;
-            }
-
-            case MotionEvent.ACTION_POINTER_UP:{
-                int pointerIndex = event.getActionIndex();
-                if (event.getPointerId(pointerIndex) == activePointerId) {
-                    int newIndex = pointerIndex == 0 ? 1 : 0;
-                    activePointerId = event.getPointerId(newIndex);
-                    lastTouchX = event.getX(newIndex);
-                    lastTouchY = event.getY(newIndex);
-                }
-                break;
-            }
-        }
+        moveGestureDetector.onTouchEvent(event);
         return true;
-    }
-
-    private void onScroll(float dx,float dy,float distanceX, float distanceY) {
-        imageMatrix.postTranslate(dx, dy);
-        setImageMatrix(imageMatrix);
     }
 
     @Override
@@ -199,20 +144,30 @@ public class ClipImageView extends AppCompatImageView implements ScaleGestureDet
      * 图片经过平移后,如果图片没有包含裁剪框,则平移调整
      * 图片经过缩放后,如果缩放值小于初始缩放值,则缩放回弹
      */
-    private void checkBoarder(){
+    private void adjustTranslateAndScale() {
         Drawable drawable = getDrawable();
         if (drawable == null) {
             return;
         }
-        RectF bounds = getDrawableBounds();
+
         final float[] matrixValues = new float[9];
         imageMatrix.getValues(matrixValues);
         float scale = matrixValues[Matrix.MSCALE_X];
         if (scale < initScale) {
             //缩放回弹
-
+            float postScale = initScale / scale;
+            imageMatrix.postScale(postScale, postScale,
+                    scaleGestureDetector.getFocusX(), scaleGestureDetector.getFocusY());
+            imageMatrix.getValues(matrixValues);
         }
+        float[] transXY = computeBorderXY();
+        smoothTranslate(transXY[0], transXY[1]);
+    }
 
+    private float[] computeBorderXY() {
+        final float[] matrixValues = new float[9];
+        RectF bounds = getDrawableBounds();
+        imageMatrix.getValues(matrixValues);
         float transX = matrixValues[Matrix.MTRANS_X];
         float transY = matrixValues[Matrix.MTRANS_Y];
         float needTransX = 0;
@@ -236,16 +191,39 @@ public class ClipImageView extends AppCompatImageView implements ScaleGestureDet
             //需要向下平移
             needTransY = clipBorderRect.bottom - (transY + bounds.height());
         }
-        smoothScaleOrTranslate(needTransX,needTransY,scale);
+        return new float[]{needTransX,needTransY};
     }
 
-    private ValueAnimator transAnimator;
+    private void smoothScale(float sourceScale, float targetScale, final float x, final float y) {
+        transAnimator = ValueAnimator.ofFloat(sourceScale, targetScale);
+        transAnimator.setDuration(200);
+        final float[] preValue = {sourceScale};
+        transAnimator.addUpdateListener(new ValueAnimator.AnimatorUpdateListener() {
+            @Override
+            public void onAnimationUpdate(ValueAnimator animation) {
+                float scale = (float) animation.getAnimatedValue();
+                float postScale = scale / preValue[0];
+                imageMatrix.postScale(postScale, postScale, x, y);
+                setImageMatrix(imageMatrix);
+                preValue[0] = scale;
+            }
+        });
+        transAnimator.addListener(new AnimatorListenerAdapter() {
+            @Override
+            public void onAnimationEnd(Animator animation) {
+                float[] transXY = computeBorderXY();
+                smoothTranslate(transXY[0], transXY[1]);
+            }
+        });
+        transAnimator.start();
+    }
 
-    private void smoothScaleOrTranslate(final float translateX, final float translateY,float scale) {
+    private void smoothTranslate(final float translateX, final float translateY) {
         if (translateX != 0 || translateY != 0) {
-            final float[] preValueXY = {0,0};
-            int duration = (int) (pxToDp(Math.max(Math.abs(translateX), Math.abs(translateY))) * 0.8f);
-            transAnimator = ValueAnimator.ofFloat(0, translateX > 0 ? translateX : translateY);
+            final float[] preValue = {0, 0}; //0 transX,1 transY
+            int duration = computeDuration(translateX, translateY);
+            float[] value = computeAnimatorValue(translateX, translateY);
+            transAnimator = ValueAnimator.ofFloat(value[0], value[1]);
             transAnimator.setDuration(duration);
             transAnimator.addUpdateListener(new ValueAnimator.AnimatorUpdateListener() {
                 @Override
@@ -253,17 +231,30 @@ public class ClipImageView extends AppCompatImageView implements ScaleGestureDet
                     float fraction = animation.getAnimatedFraction();
                     float currentX = translateX * fraction;
                     float currentY = translateY * fraction;
-                    imageMatrix.postTranslate(currentX - preValueXY[0], currentY - preValueXY[1]);
+                    imageMatrix.postTranslate(currentX - preValue[0], currentY - preValue[1]);
                     setImageMatrix(imageMatrix);
-                    preValueXY[0] = currentX;
-                    preValueXY[1] = currentY;
+                    preValue[0] = currentX;
+                    preValue[1] = currentY;
                 }
             });
             transAnimator.start();
         }
     }
 
-    public Bitmap clip() {
+    private float[] computeAnimatorValue(float translateX, float translateY) {
+        float start = 0;
+        float end = translateX > 0 ? translateX : translateY;
+        return new float[]{start, end};
+    }
+
+    private int computeDuration(float translateX, float translateY) {
+        float max = Math.max(Math.abs(translateX), Math.abs(translateY));
+        return (int) (pxToDp(max) * 0.45f);
+    }
+
+    public
+    @Nullable
+    Bitmap clip() {
         final Drawable drawable = getDrawable();
         final Bitmap originalBitmap = ((BitmapDrawable) drawable).getBitmap();
 
@@ -277,6 +268,9 @@ public class ClipImageView extends AppCompatImageView implements ScaleGestureDet
         final float cropY = (-transY + clipBorderRect.top) / scale;
         final float cropWidth = clipBorderRect.width() / scale;
         final float cropHeight = clipBorderRect.height() / scale;
+        if (cropX < 0 || cropY < 0) {
+            return null;
+        }
         return Bitmap.createBitmap(originalBitmap,
                 (int) cropX, (int) cropY, (int) cropWidth, (int) cropHeight);
     }
@@ -315,14 +309,14 @@ public class ClipImageView extends AppCompatImageView implements ScaleGestureDet
         int vHeight = getHeight();
 
         float drawableAspect = (float) dWidth / dHeight;
-        float scaleWidth,scaleHeight;
+        float scaleWidth, scaleHeight;
         float scale;
         if (cWidth > cHeight * drawableAspect) {
             scaleWidth = cWidth;
             scale = scaleWidth / dWidth;
             scaleHeight = dHeight * scale;
 
-        }else{
+        } else {
             scaleHeight = cHeight;
             scale = scaleHeight / dHeight;
             scaleWidth = dWidth * scale;
@@ -337,19 +331,14 @@ public class ClipImageView extends AppCompatImageView implements ScaleGestureDet
         setImageMatrix(imageMatrix);
 
         initScale = scale;
-        minScale = scale / 4;
+        minScale = scale / 2;
         maxScale = scale * 4;
     }
-
-    private float initScale;
-    private float minScale;
-    private float maxScale;
-    private Matrix imageMatrix = new Matrix();
 
     @Override
     protected void onDraw(Canvas canvas) {
         super.onDraw(canvas);
-        int width= getWidth();
+        int width = getWidth();
         int height = getHeight();
 
         canvas.save();
@@ -369,23 +358,24 @@ public class ClipImageView extends AppCompatImageView implements ScaleGestureDet
         paint.setColor(clipBorderColor);
         clipBorderRect.inset(-clipBorderStrokeWidth / 2, -clipBorderStrokeWidth / 2);
         canvas.drawRect(clipBorderRect, paint);
-        clipBorderRect.inset(clipBorderStrokeWidth / 2,clipBorderStrokeWidth / 2);
+        clipBorderRect.inset(clipBorderStrokeWidth / 2, clipBorderStrokeWidth / 2);
     }
 
     @Override
     public boolean onScale(ScaleGestureDetector detector) {
         float scaleFactor = detector.getScaleFactor();
-        imageMatrix.postScale(scaleFactor, scaleFactor,detector.getFocusX(),detector.getFocusY());
         final float[] matrixValues = new float[9];
         imageMatrix.getValues(matrixValues);
         float scale = matrixValues[Matrix.MSCALE_X];
-        if (scale < initScale) {
-            //缩放回弹
+        float willScale = scale * scaleFactor;
+        if (willScale > maxScale) {
+            scaleFactor = maxScale / scale;
         }
-        float transX = matrixValues[Matrix.MTRANS_X];
-        float transY = matrixValues[Matrix.MTRANS_Y];
-        Log.d("clipImage", "tranX:" + transX);
-        Log.d("clipImage", "transY:" + transY);
+
+        if (willScale < minScale) {
+            scaleFactor = minScale / scale;
+        }
+        imageMatrix.postScale(scaleFactor, scaleFactor, detector.getFocusX(), detector.getFocusY());
         return true;
     }
 
@@ -396,5 +386,18 @@ public class ClipImageView extends AppCompatImageView implements ScaleGestureDet
 
     @Override
     public void onScaleEnd(ScaleGestureDetector detector) {
+    }
+
+    @Override
+    public boolean onMoveGestureScroll(float dx, float dy, float distanceX, float distanceY) {
+        imageMatrix.postTranslate(dx, dy);
+        setImageMatrix(imageMatrix);
+        return false;
+    }
+
+    @Override
+    public boolean onMoveGestureUpOrCancel() {
+        adjustTranslateAndScale();
+        return false;
     }
 }
