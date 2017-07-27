@@ -2,6 +2,7 @@
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
     android:orientation="vertical">
 
     <RelativeLayout
@@ -23,6 +24,12 @@
             android:text="裁剪"/>
 
     </RelativeLayout>
+
+    <!--<com.githang.clipimage.ClipImageView-->
+        <!--android:id="@+id/clip_image_view"-->
+        <!--android:layout_width="match_parent"-->
+        <!--android:layout_height="match_parent"-->
+        <!--app:civClipPadding="20dp"/>-->
 
     <com.example.administrator.myapplication.canvas.ClipImageView
         android:id="@+id/clip_image_view"

@@ -87,6 +87,21 @@
 
         </activity>
 
+        <service android:name=".ipc.MyService"
+            android:process=":remote"
+            android:exported="true"
+            android:permission="">
+
+            <intent-filter>
+                <action android:name="com.example.administrator.myapplication.IMyAidlInterface" />
+            </intent-filter>
+
+        </service>
+
+        <activity android:name=".ipc.IpcActivity">
+
+        </activity>
+
         <activity android:name=".GradientActivity">
 
         </activity>

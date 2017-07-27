@@ -23,6 +23,7 @@ public class ClipImageActivity extends AppCompatActivity {
 
     public static final String CLIP_BITMAP = "params:clip_bitmap";
 
+//    private ClipImageView clipImageView;
     private ClipImageView clipImageView;
 
     @Override
