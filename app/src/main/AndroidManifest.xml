@@ -50,7 +50,8 @@
 
         </activity>
 
-        <activity android:name=".ClipImageActivity" />
+        <activity android:name=".ClipImageActivity"
+            android:theme="@style/BlackTheme"/>
 
         <provider
             android:name="android.support.v4.content.FileProvider"
@@ -135,6 +136,13 @@
         <activity android:name=".BMapActivity">
 
         </activity>
+
+        <service android:name="com.baidu.location.f" android:enabled="true" android:process=":remote">
+        </service>
+
+        <meta-data
+            android:name="com.baidu.lbsapi.API_KEY"
+            android:value="AK" />
 
         <activity android:name=".recyclerview.tab.TabDemoActivity">
 

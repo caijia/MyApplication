@@ -5,6 +5,11 @@
     android:layout_width="match_parent"
     android:layout_height="match_parent">
 
+   <com.example.administrator.myapplication.canvas.LargeImageView
+       android:layout_width="match_parent"
+       android:layout_height="match_parent"
+       android:visibility="gone"/>
+
    <ImageView
        android:id="@+id/clip_result_iv"
        android:layout_width="wrap_content"

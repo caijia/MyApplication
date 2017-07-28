@@ -58,6 +58,7 @@ public class MoveGestureDetector {
                     }
 
                 }else{
+                    if (listener != null && listener.onMoveGestureBeginTap(event))
                     handler.sendEmptyMessageDelayed(TAP, doubleTapTimeout);
                 }
                 if (previousDownEvent != null) {
@@ -177,5 +178,7 @@ public class MoveGestureDetector {
         void onMoveGestureUpOrCancel(MotionEvent event);
 
         void onMoveGestureDoubleTap(MotionEvent event);
+
+        boolean onMoveGestureBeginTap(MotionEvent event);
     }
 }
